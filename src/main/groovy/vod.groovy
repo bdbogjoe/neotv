@@ -43,14 +43,15 @@ if (options) {
     def url = 'http://neotv.siptv-list.com/siptv.m3u?code=' + options.code
     def db = 'https://api.themoviedb.org/3/search/movie'
     def sql = Sql.newInstance("jdbc:h2:file:./neotv", "sa", "sa", "org.h2.Driver")
-    boolean found
-    sql.eachRow("SELECT * FROM INFORMATION_SCHEMA.TABLES") { row ->
-        if(row.TABLE_NAME=='MOVIES'){
-            found=true
+    try {
+        boolean found
+        sql.eachRow("SELECT * FROM INFORMATION_SCHEMA.TABLES") { row ->
+            if (row.TABLE_NAME == 'MOVIES') {
+                found = true
+            }
         }
-    }
-if(!found){
-    sql.execute('''
+        if (!found) {
+            sql.execute('''
 CREATE TABLE MOVIES (
   id INT PRIMARY KEY,
   title VARCHAR(128),
@@ -60,85 +61,88 @@ CREATE TABLE MOVIES (
   date date
 )
 ''')
-}
-    println url
-    def groups = [] as LinkedList
-    def currentGroup
-    new URL(url).eachLine { line ->
-        def m = p.matcher(line)
-        if (m.find()) {
-            def g = m.group(1)
-            if (g) {
-                println "Found group ${g}"
-                if (g?.equals(options.group)) {
-                    currentGroup = new Group(name: g)
-                    groups << currentGroup
+        }
+        println url
+        def groups = [] as LinkedList
+        def currentGroup
+        new URL(url).eachLine { line ->
+            def m = p.matcher(line)
+            if (m.find()) {
+                def g = m.group(1)
+                if (g) {
+                    println "Found group ${g}"
+                    if (g?.equals(options.group)) {
+                        currentGroup = new Group(name: g)
+                        groups << currentGroup
+                    } else {
+                        currentGroup = null
+                    }
                 } else {
-                    currentGroup = null
-                }
-            } else {
-                if (currentGroup) {
-                    def title = m.group(2)
-                    def video
-                    sql.eachRow("select * from MOVIES where title=?", [title], {row->
-                        video = new Movie()
-                        moviesProps.each {
-                            video[it] = row[it.toUpperCase()]
-                        }
-                    })
-                    if(!video) {
-                        println "Processing $title"
-                        video = new Movie(title: title)
-                        def http = new HTTPBuilder(db)
-                        // Used for all other failure codes not handled by a code-specific handler:
-                        http.handler.failure = { resp ->
-                            println "Unexpected failure: ${resp.statusLine}"
-                        }
-                        http.request(Method.GET, ContentType.TEXT) { req ->
-                            uri.query = [api_key: options.api, language: 'fr_FR', query: title, include_adult: false]
+                    if (currentGroup) {
+                        def title = m.group(2)
+                        def video
+                        sql.eachRow("select * from MOVIES where title=?", [title], { row ->
+                            video = new Movie()
+                            moviesProps.each {
+                                video[it] = row[it.toUpperCase()]
+                            }
+                        })
+                        if (!video) {
+                            println "Processing $title"
+                            video = new Movie(title: title)
+                            def http = new HTTPBuilder(db)
+                            // Used for all other failure codes not handled by a code-specific handler:
+                            http.handler.failure = { resp ->
+                                println "Unexpected failure: ${resp.statusLine}"
+                            }
+                            http.request(Method.GET, ContentType.TEXT) { req ->
+                                uri.query = [api_key: options.api, language: 'fr_FR', query: title, include_adult: false]
 
-                            response.success = { resp, reader ->
-                                assert resp.status == 200
-                                def jsonSlurper = new JsonSlurper()
-                                def content = jsonSlurper.parse(reader)
-                                if (content.total_results) {
-                                    def results = content.results.sort { row1, row2 ->
-                                        row2.popularity.compareTo(row1.popularity)
+                                response.success = { resp, reader ->
+                                    assert resp.status == 200
+                                    def jsonSlurper = new JsonSlurper()
+                                    def content = jsonSlurper.parse(reader)
+                                    if (content.total_results) {
+                                        def results = content.results.sort { row1, row2 ->
+                                            row2.popularity.compareTo(row1.popularity)
+                                        }
+                                        def result = results.get(0)
+                                        video.id = result.id
+                                        video.overview = result.overview
+                                        video.date = new SimpleDateFormat("yyyy-MM-dd").parse(result.release_date)
+                                        video.image = "https://image.tmdb.org/t/p/w500${result.poster_path}"
                                     }
-                                    def result = results.get(0)
-                                    video.id = result.id
-                                    video.overview = result.overview
-                                    video.date = new SimpleDateFormat("yyyy-MM-dd").parse(result.release_date)
-                                    video.image = "https://image.tmdb.org/t/p/w500${result.poster_path}"
+                                }
+
+                                // called only for a 404 (not found) status code:
+                                response.'404' = { resp ->
+                                    println 'Not found'
+                                }
+                                response.'401' = { resp ->
+                                    println "Access denied"
                                 }
                             }
-
-                            // called only for a 404 (not found) status code:
-                            response.'404' = { resp ->
-                                println 'Not found'
-                            }
-                            response.'401' = { resp ->
-                                println "Access denied"
-                            }
                         }
+                        currentGroup.videos << video
                     }
-                    currentGroup.videos << video
+                }
+            } else if (currentGroup && currentGroup.videos && line.startsWith("http")) {
+                //URL of previous movie
+                def video = currentGroup.videos.last()
+                video.url = line
+                //Need to store it
+                if (video.id) {
+                    sql.execute("delete from MOVIES where id=?", [video.id])
+                    sql.execute("insert into MOVIES(id, title, url, image, overview, date) values(:id, :title, :url, :image, :overview, :date)", video.properties)
                 }
             }
-        } else if (currentGroup && currentGroup.videos && line.startsWith("http")) {
-            //URL of previous movie
-            def video = currentGroup.videos.last()
-            video.url = line
-            //Need to store it
-            if(video.id) {
-                sql.execute("delete from MOVIES where id=?", [video.id])
-                sql.execute("insert into MOVIES(id, title, url, image, overview, date) values(:id, :title, :url, :image, :overview, :date)", video.properties)
-            }
         }
-    }
-    JsonBuilder builder = new JsonBuilder(groups);
+        JsonBuilder builder = new JsonBuilder(groups);
 
-    println builder.toPrettyString()
+        println builder.toPrettyString()
+    }finally{
+        sql.close()
+    }
 } else {
     cli.usage()
     System.exit(1)
