@@ -109,7 +109,9 @@ CREATE TABLE MOVIES (
                                         def result = results.get(0)
                                         video.id = result.id
                                         video.overview = result.overview
-                                        video.date = new SimpleDateFormat("yyyy-MM-dd").parse(result.release_date)
+                                        if(result.release_date) {
+                                            video.date = new SimpleDateFormat("yyyy-MM-dd").parse(result.release_date)
+                                        }
                                         video.image = "https://image.tmdb.org/t/p/w500${result.poster_path}"
                                     }
                                 }
@@ -132,8 +134,17 @@ CREATE TABLE MOVIES (
                 video.url = line
                 //Need to store it
                 if (video.id) {
-                    sql.execute("delete from MOVIES where id=?", [video.id])
-                    sql.execute("insert into MOVIES(id, title, url, image, overview, date) values(:id, :title, :url, :image, :overview, :date)", video.properties)
+                    int row = sql.executeUpdate("delete from MOVIES where id=?", [video.id])
+                    if(row){
+                        println "Updating : ${video.title}"
+                    }else{
+                        println "Inserting : ${video.title}"
+                    }
+                    row = sql.executeUpdate("insert into MOVIES(id, title, url, image, overview, date) values(:id, :title, :url, :image, :overview, :date)", video.properties)
+                    if(!row){
+                        throw new Exception("unable to insert : "+video)
+                    }
+                    sql.commit()
                 }
             }
         }
