@@ -9,8 +9,6 @@ import groovyx.net.http.Method
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
-@Grab(group = 'org.codehaus.groovy.modules.http-builder', module = 'http-builder', version = '0.7')
-@Grab(group = 'com.h2database', module = 'h2', version = '1.3.176')
 
 def cli = new CliBuilder(usage: 'groovy <script> [options]')
 cli._(longOpt: 'code', args: 1, argName: 'code', 'Set neotv code', required: true)
@@ -22,6 +20,7 @@ def options = cli.parse(args)
 @ToString(includes = ["title", "url"])
 class Movie {
     Integer id
+    Integer id_db
     String title
     String url
     String image
@@ -35,7 +34,7 @@ class Group {
     def videos = []
 }
 
-def moviesProps = new Movie().properties.keySet().findAll({it!='class'})
+def moviesProps = new Movie().properties.keySet().findAll({ it != 'class' })
 
 Pattern p = Pattern.compile('(?:group-title="([^"]*)")?,(.*)$')
 
@@ -53,7 +52,8 @@ if (options) {
         if (!found) {
             sql.execute('''
 CREATE TABLE MOVIES (
-  id INT PRIMARY KEY,
+  id int PRIMARY KEY auto_increment,
+  id_db int,
   title VARCHAR(128),
   url VARCHAR(128),
   image VARCHAR(128),
@@ -107,9 +107,9 @@ CREATE TABLE MOVIES (
                                             row2.popularity.compareTo(row1.popularity)
                                         }
                                         def result = results.get(0)
-                                        video.id = result.id
+                                        video.id_db = result.id
                                         video.overview = result.overview
-                                        if(result.release_date) {
+                                        if (result.release_date) {
                                             video.date = new SimpleDateFormat("yyyy-MM-dd").parse(result.release_date)
                                         }
                                         video.image = "https://image.tmdb.org/t/p/w500${result.poster_path}"
@@ -133,16 +133,16 @@ CREATE TABLE MOVIES (
                 def video = currentGroup.videos.last()
                 video.url = line
                 //Need to store it
-                if (video.id) {
+                if (!video.id) {
                     int row = sql.executeUpdate("delete from MOVIES where id=?", [video.id])
-                    if(row){
+                    if (row) {
                         println "Updating : ${video.title}"
-                    }else{
+                    } else {
                         println "Inserting : ${video.title}"
                     }
-                    row = sql.executeUpdate("insert into MOVIES(id, title, url, image, overview, date) values(:id, :title, :url, :image, :overview, :date)", video.properties)
-                    if(!row){
-                        throw new Exception("unable to insert : "+video)
+                    row = sql.executeUpdate("insert into MOVIES(id_db, title, url, image, overview, date) values(:id_db, :title, :url, :image, :overview, :date)", video.properties)
+                    if (!row) {
+                        throw new Exception("unable to insert : " + video)
                     }
                     sql.commit()
                 }
@@ -151,7 +151,7 @@ CREATE TABLE MOVIES (
         JsonBuilder builder = new JsonBuilder(groups);
 
         println builder.toPrettyString()
-    }finally{
+    } finally {
         sql.close()
     }
 } else {
