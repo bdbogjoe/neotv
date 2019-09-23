@@ -14,7 +14,7 @@ import java.util.regex.Pattern
 
 class Processor {
 
-    private ExecutorService executor = Executors.newFixedThreadPool(2)
+    private ExecutorService executor = Executors.newFixedThreadPool(3)
 
 
     private Pattern p = Pattern.compile('(?:group-title="([^"]*)")?,(.*)$')
@@ -54,10 +54,12 @@ class Processor {
                     if (currentGroup) {
                         def title = m.group(2)
                         def video = storage.find(title)
-                        if (!video) {
+                        if(!video) {
                             video = new Movie(title: title, publish: now)
-                            currentGroup.videos << video
-                            //new MovieLoader(api, video).run()
+                            executor.submit(new MovieLoader(storage, api, video))
+                        }
+                        currentGroup.videos << video
+                        if(!video.id){
                             executor.submit(new MovieLoader(storage, api, video))
                         }
                     }
@@ -70,7 +72,7 @@ class Processor {
         }
         executor.shutdown()
         while (!executor.isTerminated()) {
-            println "waiting..."
+            println "waiting..., remaining tasks : "+executor.queue.size()
             Thread.currentThread().sleep(1000)
         }
         groups.each{Group g->

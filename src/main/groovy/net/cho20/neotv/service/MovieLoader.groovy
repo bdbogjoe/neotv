@@ -47,7 +47,7 @@ class MovieLoader implements Runnable{
                     if (result.release_date) {
                         movie.date = new SimpleDateFormat("yyyy-MM-dd").parse(result.release_date)
                     }
-                    movie.image = "https://image.tmdb.org/t/p/w500${result.poster_path}"
+                    movie.image = result.poster_path
                 }
             }
 
@@ -57,6 +57,9 @@ class MovieLoader implements Runnable{
             }
             response.'401' = { resp ->
                 println "Access denied"
+            }
+            response.'429' = {
+                run()
             }
         }
         if(movie.url){

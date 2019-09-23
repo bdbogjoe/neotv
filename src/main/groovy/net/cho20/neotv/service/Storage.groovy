@@ -56,6 +56,7 @@ CREATE TABLE MOVIES (
                 video[it] = row[it.toUpperCase()]
             }
         })
+        return video
     }
 
     void close(){
