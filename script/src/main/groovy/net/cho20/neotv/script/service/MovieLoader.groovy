@@ -4,12 +4,16 @@ import groovy.json.JsonSlurper
 import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
-import net.cho20.neotv.bean.Movie
+import net.cho20.neotv.script.bean.Movie
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.text.SimpleDateFormat
 
 class MovieLoader implements Runnable{
     private String db = 'https://api.themoviedb.org/3/search/movie'
+
+    private static final Logger LOG = LoggerFactory.getLogger(MovieLoader.class);
 
 
     private Movie movie
@@ -24,7 +28,7 @@ class MovieLoader implements Runnable{
 
     @Override
     void run() {
-        println "Processing ${movie}"
+        LOG.info("Processing {}", movie.title)
         def http = new HTTPBuilder(db)
         // Used for all other failure codes not handled by a code-specific handler:
         http.handler.failure = { resp ->

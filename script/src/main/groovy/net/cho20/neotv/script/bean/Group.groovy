@@ -4,6 +4,17 @@ import groovy.transform.ToString
 
 @ToString(includes = ["name", "videos"])
 class Group {
-    def name
-    def videos = []
+    String name
+    Type type
+    Iterable<Stream> streams = []
+
+    Group(){
+
+    }
+
+    Group(String name, Type type, streams) {
+        this.name = name
+        this.type = type
+        this.streams = streams
+    }
 }

@@ -1,4 +1,4 @@
-package net.cho20.neotv.server;
+package net.cho20.neotv.server.service;
 
 import java.util.Date;
 
@@ -19,6 +19,6 @@ public class StorageService implements InitializingBean {
     }
 
     public Iterable<Movie> findAfter(Date date){
-        storage.findAfter(date)
+        return storage.findAfter(date);
     }
 }

@@ -2,12 +2,9 @@ package net.cho20.neotv.script.bean
 
 import groovy.transform.ToString
 
-@ToString(includes = ["title", "url"])
-class Movie implements Comparable<Movie>{
-    Integer id
+class Movie extends Stream implements Comparable<Movie>{
+
     Integer id_db
-    String title
-    String url
     String image
     String overview
     Date date

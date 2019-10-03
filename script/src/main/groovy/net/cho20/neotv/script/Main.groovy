@@ -1,8 +1,9 @@
-package net.cho20.neotv.script.service
+package net.cho20.neotv.script
 
 
 import groovy.json.JsonBuilder
 import groovy.xml.MarkupBuilder
+import net.cho20.neotv.script.service.Processor
 
 import java.text.SimpleDateFormat
 
@@ -21,7 +22,7 @@ class Main {
 
         if(options){
             try {
-                def processor = new Processor(options.code, options.api, options.group ?: null)
+                def processor = new Processor(options.code, options.api, options.groups ?: null)
                 def groups = processor.process().sort()
                 if (options.output) {
                        def file = new File(options.output)
@@ -70,7 +71,7 @@ class Main {
                                             }
                                         }
                                     }
-                                    for(Iterator i=g.videos.iterator();i.hasNext();){
+                                    for(Iterator i=g.streams.iterator(); i.hasNext();){
                                         div(class:'row'){
                                             printVideo(marker, i.next())
                                             if(i.hasNext()) {
