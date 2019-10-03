@@ -1,0 +1,8 @@
+rootProject.name='neotv'
+
+include 'script'
+include 'server'
+
+rootProject.children.each {
+    it.name = "${rootProject.name}-${it.name}"
+}

@@ -1,7 +1,7 @@
-package net.cho20.neotv.service
+package net.cho20.neotv.script.service
 
 import groovy.sql.Sql
-import net.cho20.neotv.bean.Movie
+import net.cho20.neotv.script.bean.Movie
 
 class Storage {
 
@@ -48,13 +48,32 @@ CREATE TABLE MOVIES (
         insert(video)
     }
 
+    Iterable<Movie> findAfter(Date date=null){
+        if(!date){
+            sql.eachRow("select max(publish) publish from movie", {
+                date = row.publish
+            })
+        }
+        def out=[]
+        sql.eachRow("select * from MOVIES where publish>?", [title], { row ->
+            out <<bind(row)
+        })
+        return out
+    }
+
+
+    private Movie bind(row){
+        def video = new Movie()
+        moviesProps.each {
+            video[it] = row[it.toUpperCase()]
+        }
+        return video
+    }
+
     Movie find(String title){
         def video
         sql.eachRow("select * from MOVIES where title=?", [title], { row ->
-            video = new Movie()
-            moviesProps.each {
-                video[it] = row[it.toUpperCase()]
-            }
+            video = bind(row)
         })
         return video
     }

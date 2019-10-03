@@ -1,13 +1,9 @@
-package net.cho20.neotv.service
+package net.cho20.neotv.script.service
 
-import groovy.json.JsonSlurper
-import groovyx.net.http.ContentType
-import groovyx.net.http.HTTPBuilder
-import groovyx.net.http.Method
+
 import net.cho20.neotv.bean.Group
 import net.cho20.neotv.bean.Movie
 
-import java.text.SimpleDateFormat
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.regex.Pattern

@@ -1,4 +1,4 @@
-package net.cho20.neotv.bean
+package net.cho20.neotv.script.bean
 
 import groovy.transform.ToString
 

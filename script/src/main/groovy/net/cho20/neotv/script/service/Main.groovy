@@ -1,10 +1,8 @@
-package net.cho20.neotv.service
+package net.cho20.neotv.script.service
 
 
 import groovy.json.JsonBuilder
 import groovy.xml.MarkupBuilder
-import net.cho20.neotv.bean.Group
-import net.cho20.neotv.bean.Movie
 
 import java.text.SimpleDateFormat
 

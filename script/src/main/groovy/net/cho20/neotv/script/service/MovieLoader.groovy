@@ -1,4 +1,4 @@
-package net.cho20.neotv.service
+package net.cho20.neotv.script.service
 
 import groovy.json.JsonSlurper
 import groovyx.net.http.ContentType
