@@ -21,7 +21,7 @@ dependencies {
 jar {
     manifest {
         attributes(
-                'Main-Class': 'net.cho20.neotv.service.Main'
+                'Main-Class': 'net.cho20.neotv.Main'
         )
     }
     from {
