@@ -1,6 +1,8 @@
 package net.cho20.neotv.script.service
 
-
+import groovyx.net.http.ContentType
+import groovyx.net.http.HTTPBuilder
+import groovyx.net.http.Method
 import net.cho20.neotv.script.bean.Group
 import net.cho20.neotv.script.bean.Movie
 import net.cho20.neotv.script.bean.Stream
@@ -38,58 +40,63 @@ class Processor {
     }
 
     Iterable<Group> process() {
-        println url
+        LOG.info("Processing : {}", url)
         def now = new Date()
         def foundGroup = [] as LinkedList
         def currentGroup
-        new URL(url).eachLine { line ->
-            def m = p.matcher(line)
-            if (m.find()) {
-                def g = m.group(1)
-                if (g) {
-                    LOG.info("Found group {}", g)
-                    if (!groups || groups.contains(g)) {
-                        currentGroup = new Group(name: g)
-                        if (g.contains('VOD')) {
-                            currentGroup.type = Type.MOVIE
-                        }else{
-                            currentGroup.type = Type.TV
+        def http = new HTTPBuilder(url)
+        http.request(Method.GET, ContentType.TEXT) { req ->
+            response.success = { resp, reader ->
+                reader.eachLine{ line->
+                    def m = p.matcher(line)
+                    if (m.find()) {
+                        def g = m.group(1)
+                        if (g) {
+                            LOG.info("Found group {}", g)
+                            if (!groups || groups.contains(g)) {
+                                currentGroup = new Group(name: g)
+                                if (g.contains('VOD')) {
+                                    currentGroup.type = Type.MOVIE
+                                }else{
+                                    currentGroup.type = Type.TV
+                                }
+                                foundGroup << currentGroup
+                            } else {
+                                currentGroup = null
+                            }
                         }
-                        foundGroup << currentGroup
-                    } else {
-                        currentGroup = null
+                        if (currentGroup) {
+                            def title = m.group(2)
+                            if (currentGroup.type == Type.MOVIE) {
+                                def video = storage.find(title)
+                                if (!video) {
+                                    video = new Movie(title: title, publish: now)
+                                    //executor.submit(new MovieLoader(storage, api, video))
+                                }
+                                currentGroup.streams << video
+                                if (!video.id) {
+                                    executor.submit(new MovieLoader(storage, api, video))
+                                }
+                            } else {
+                                currentGroup.streams << new Stream(title: title)
+                            }
+                        }
+                    } else if (currentGroup && currentGroup.streams && line.startsWith("http")) {
+                        //URL of previous stream
+                        def stream = currentGroup.streams.last()
+                        def matcher = CODE.matcher(line)
+                        def sb = new StringBuffer()
+                        if (matcher.find()) {
+                            matcher.appendReplacement(sb, '$1%s')
+                        }
+                        matcher.appendTail(sb)
+                        stream.url = sb.toString()
+                        LOG.info("Found stream : {}", stream)
                     }
+
                 }
-                if (currentGroup) {
-                    def title = m.group(2)
-                    if (currentGroup.type == Type.MOVIE) {
-                        def video = storage.find(title)
-                        if (!video) {
-                            video = new Movie(title: title, publish: now)
-                            //executor.submit(new MovieLoader(storage, api, video))
-                        }
-                        currentGroup.streams << video
-                        if (!video.id) {
-                            executor.submit(new MovieLoader(storage, api, video))
-                        }
-                    } else {
-                        currentGroup.streams << new Stream(title: title)
-                    }
-                }
-            } else if (currentGroup && currentGroup.streams && line.startsWith("http")) {
-                //URL of previous stream
-                def stream = currentGroup.streams.last()
-                def matcher = CODE.matcher(line)
-                def sb = new StringBuffer()
-                if (matcher.find()) {
-                    matcher.appendReplacement(sb, '$1%s')
-                }
-                matcher.appendTail(sb)
-                stream.url = sb.toString()
-                LOG.info("Found stream : {}", stream)
             }
         }
-
         executor.shutdown()
         while (!executor.isTerminated()) {
             println "waiting..., remaining tasks : " + executor.queue.size()
