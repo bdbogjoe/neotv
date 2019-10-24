@@ -1,8 +1,7 @@
 package net.cho20.neotv.server.service;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -21,7 +20,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 public class ProcessorService {
 
     private Collection<Processor> processors = new ArrayList<>();
-    private Iterable<Group> groups = Collections.emptyList();
+    private Iterable<Group<Stream>> groups = Collections.emptyList();
 
     public ProcessorService(String code, String api, String groups) {
         this.processors.add(new M3uProcessor(code, api, groups.split(";")));
@@ -33,34 +32,45 @@ public class ProcessorService {
         groups = processors
                 .stream()
                 .map(Processor::process)
-                .flatMap((Function<Iterable<Group>, java.util.stream.Stream<Group>>) gr -> StreamSupport.stream(gr.spliterator(), false))
+                .flatMap((Function<Iterable<Group<Stream>>, java.util.stream.Stream<Group<Stream>>>) gr -> StreamSupport.stream(gr.spliterator(), false))
                 .collect(Collectors.toList());
     }
 
 
-    public java.util.stream.Stream<Group> getGroups(String code) {
+    public java.util.stream.Stream<Group<Map<String, String>>> getGroups(String code) {
         return StreamSupport.stream(groups.spliterator(), false)
                 .map(group ->
-                        new Group(
-
+                        new Group<>(
                                 group.getName(),
                                 group.getType(),
                                 StreamSupport.stream(group.getStreams().spliterator(), false)
-                                        .map((Function<Stream, net.cho20.neotv.server.bean.Stream>) stream ->
-                                            clone(code, stream)
+                                        .map((Function<Stream, Map<String, String>>) stream ->
+                                                clone(code, stream)
                                         ).collect(Collectors.toList())
                         )
-                )
-                ;
+                );
     }
 
-    private net.cho20.neotv.server.bean.Stream clone(String code, net.cho20.neotv.core.bean.Stream stream){
-        net.cho20.neotv.server.bean.Stream out = new net.cho20.neotv.server.bean.Stream(stream.getTitle(), stream.buildUrl(code));
+    private Map<String, String> clone(String code, net.cho20.neotv.core.bean.Stream stream){
+        Map<String, String> out = new LinkedHashMap<>();
+        out.put("title", stream.getTitle());
+        out.put("url", stream.buildUrl(code));
         if(stream instanceof Movie){
+            String image;
             if(((Movie) stream).getId_db()!=null){
-                out.setImage("https://image.tmdb.org/t/p/w400"+((Movie) stream).getImage());
+               image = "https://image.tmdb.org/t/p/w400"+((Movie) stream).getImage();
             }else {
-                out.setImage(((Movie) stream).getImage());
+                image = ((Movie) stream).getImage();
+            }
+            if(image!=null) {
+                out.put("image", image);
+            }
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if(((Movie) stream).getDate()!=null) {
+                out.put("date", sdf.format(((Movie) stream).getDate()));
+            }
+            if(((Movie) stream).getPublish()!=null) {
+                out.put("publish", sdf.format(((Movie) stream).getPublish()));
             }
         }
         return out;
