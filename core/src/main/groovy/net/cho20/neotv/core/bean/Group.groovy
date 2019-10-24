@@ -3,10 +3,10 @@ package net.cho20.neotv.core.bean
 import groovy.transform.ToString
 
 @ToString(includes = ["name", "videos"])
-class Group {
+class Group<T> {
     String name
     Type type
-    Iterable<Stream> streams = []
+    Iterable<T> streams = []
 
     Group(){
 

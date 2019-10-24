@@ -1,8 +1,12 @@
 package net.cho20.neotv.server.controller;
 
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import net.cho20.neotv.core.bean.Group;
 import net.cho20.neotv.core.bean.Type;
@@ -38,7 +42,25 @@ public class RestController {
         return filterByType(code, Type.TV);
     }
 
-    public Iterable<net.cho20.neotv.core.bean.Group> filterByType(String code, Type type) {
+    @RequestMapping("/sport")
+    public Iterable<net.cho20.neotv.core.bean.Group> sport(@RequestParam(value = "code") String code) {
+        return filterByTypeAndName(code, Type.TV, "sport");
+    }
+
+    private Iterable<net.cho20.neotv.core.bean.Group> filterByType(String code, Type type) {
         return processorService.getGroups(code).filter(group -> group.getType()==type).collect(Collectors.toList());
+    }
+    private Iterable<net.cho20.neotv.core.bean.Group> filterByTypeAndName(String code, Type type, String... name) {
+        return processorService.getGroups(code)
+                .filter(group -> group.getType()==type)
+                .map(mapGroup -> new Group<Map<String, String>>(
+                        mapGroup.getName(),
+                        mapGroup.getType(),
+                        StreamSupport.stream(mapGroup.getStreams().spliterator(), false)
+                                .filter(stringStringMap -> Arrays.stream(name).anyMatch(s -> stringStringMap.get("title").toUpperCase().contains(s.toUpperCase())))
+                                .collect(Collectors.toList())
+            ))
+                .filter(group-> group.getStreams().iterator().hasNext())
+                .collect(Collectors.toList());
     }
 }
