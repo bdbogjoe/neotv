@@ -91,7 +91,7 @@ class Processor {
                         }
                         matcher.appendTail(sb)
                         stream.url = sb.toString()
-                        LOG.info("Found stream : {}", stream)
+                        LOG.debug("Found stream : {}", stream)
                     }
 
                 }
