@@ -2,24 +2,25 @@ package net.cho20.neotv.server.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static org.codehaus.groovy.runtime.DefaultGroovyMethods.collect;
 
-import net.cho20.neotv.script.bean.Group;
-import net.cho20.neotv.script.bean.Movie;
-import net.cho20.neotv.script.bean.Stream;
-import net.cho20.neotv.script.service.JsonProcessor;
-import net.cho20.neotv.script.service.M3uProcessor;
-import net.cho20.neotv.script.service.Processor;
+import net.cho20.neotv.core.bean.Group;
+import net.cho20.neotv.core.bean.Movie;
+import net.cho20.neotv.core.bean.Stream;
+import net.cho20.neotv.core.service.JsonProcessor;
+import net.cho20.neotv.core.service.M3uProcessor;
+import net.cho20.neotv.core.service.Processor;
 import org.springframework.scheduling.annotation.Scheduled;
 
 public class ProcessorService {
 
     private Collection<Processor> processors = new ArrayList<>();
-    private Iterable<Group> groups;
+    private Iterable<Group> groups = Collections.emptyList();
 
     public ProcessorService(String code, String api, String groups) {
         this.processors.add(new M3uProcessor(code, api, groups.split(";")));
@@ -52,10 +53,14 @@ public class ProcessorService {
                 ;
     }
 
-    private net.cho20.neotv.server.bean.Stream clone(String code, net.cho20.neotv.script.bean.Stream stream){
+    private net.cho20.neotv.server.bean.Stream clone(String code, net.cho20.neotv.core.bean.Stream stream){
         net.cho20.neotv.server.bean.Stream out = new net.cho20.neotv.server.bean.Stream(stream.getTitle(), stream.buildUrl(code));
         if(stream instanceof Movie){
-            out.setImage(((Movie) stream).getImage());
+            if(((Movie) stream).getId_db()!=null){
+                out.setImage("https://image.tmdb.org/t/p/w400"+((Movie) stream).getImage());
+            }else {
+                out.setImage(((Movie) stream).getImage());
+            }
         }
         return out;
     }

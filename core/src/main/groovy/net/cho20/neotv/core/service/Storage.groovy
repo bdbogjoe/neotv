@@ -1,7 +1,7 @@
-package net.cho20.neotv.script.service
+package net.cho20.neotv.core.service
 
 import groovy.sql.Sql
-import net.cho20.neotv.script.bean.Movie
+import net.cho20.neotv.core.bean.Movie
 
 class Storage {
 

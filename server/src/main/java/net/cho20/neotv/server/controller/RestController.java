@@ -18,7 +18,7 @@ public class RestController {
     }
 
     @RequestMapping("/all")
-    public Iterable<net.cho20.neotv.script.bean.Group> groups(@RequestParam(value = "code") String code) {
+    public Iterable<net.cho20.neotv.core.bean.Group> groups(@RequestParam(value = "code") String code) {
         return processorService.getGroups(code).collect(Collectors.toList());
     }
 }

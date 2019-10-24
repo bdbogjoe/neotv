@@ -1,12 +1,12 @@
-package net.cho20.neotv.script.service
+package net.cho20.neotv.core.service
 
 import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
-import net.cho20.neotv.script.bean.Group
-import net.cho20.neotv.script.bean.Movie
-import net.cho20.neotv.script.bean.Stream
-import net.cho20.neotv.script.bean.Type
+import net.cho20.neotv.core.bean.Group
+import net.cho20.neotv.core.bean.Movie
+import net.cho20.neotv.core.bean.Stream
+import net.cho20.neotv.core.bean.Type
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -75,7 +75,7 @@ class M3uProcessor implements Processor{
                                 }
                                 currentGroup.streams << video
                                 if (!video.id) {
-                                    executor.submit(new MovieLoader(storage, api, video))
+                                    //executor.submit(new MovieLoader(storage, api, video))
                                 }
                             } else {
                                 currentGroup.streams << new Stream(title: title)

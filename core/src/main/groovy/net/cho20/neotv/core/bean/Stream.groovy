@@ -1,9 +1,6 @@
-package net.cho20.neotv.script.bean
+package net.cho20.neotv.core.bean
 
 import groovy.transform.ToString
-
-import java.text.MessageFormat
-
 
 @ToString(includes = ["title", "url"])
 class Stream {

@@ -2,14 +2,13 @@ package net.cho20.neotv.server.bean;
 
 public class Stream {
 
-    private String title;
-    private String url;
+    private final String title;
+    private final String url;
     private String image;
 
-    public Stream(String title, String url, String image) {
+    public Stream(String title, String url) {
         this.title = title;
         this.url = url;
-        this.image=image;
     }
 
     public String getTitle() {

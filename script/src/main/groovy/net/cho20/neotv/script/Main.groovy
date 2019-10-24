@@ -3,7 +3,7 @@ package net.cho20.neotv.script
 
 import groovy.json.JsonBuilder
 import groovy.xml.MarkupBuilder
-import net.cho20.neotv.script.service.M3uProcessor
+import net.cho20.neotv.core.service.M3uProcessor
 
 import java.text.SimpleDateFormat
 

@@ -1,10 +1,10 @@
-package net.cho20.neotv.script.service
+package net.cho20.neotv.core.service
 
 import groovy.json.JsonSlurper
 import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
-import net.cho20.neotv.script.bean.Movie
+import net.cho20.neotv.core.bean.Movie
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
