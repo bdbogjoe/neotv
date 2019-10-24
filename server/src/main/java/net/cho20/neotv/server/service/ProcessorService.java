@@ -12,6 +12,7 @@ import static org.codehaus.groovy.runtime.DefaultGroovyMethods.collect;
 import net.cho20.neotv.core.bean.Group;
 import net.cho20.neotv.core.bean.Movie;
 import net.cho20.neotv.core.bean.Stream;
+import net.cho20.neotv.core.bean.Type;
 import net.cho20.neotv.core.service.JsonProcessor;
 import net.cho20.neotv.core.service.M3uProcessor;
 import net.cho20.neotv.core.service.Processor;
@@ -24,7 +25,7 @@ public class ProcessorService {
 
     public ProcessorService(String code, String api, String groups) {
         this.processors.add(new M3uProcessor(code, api, groups.split(";")));
-        this.processors.add(new JsonProcessor(309, "Cartoon FR"));
+        this.processors.add(new JsonProcessor(309, "Cartoon FR", Type.CARTOON));
     }
 
     @Scheduled(fixedDelay = 1 * 3600 * 1000)

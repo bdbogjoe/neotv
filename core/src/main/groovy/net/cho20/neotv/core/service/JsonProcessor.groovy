@@ -14,14 +14,16 @@ import org.slf4j.LoggerFactory
 import java.text.SimpleDateFormat
 
 class JsonProcessor implements Processor {
-    private Integer pack
-    private String name
+    private final Integer pack
+    private final String name
+    private final Type type
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonProcessor.class);
 
-    JsonProcessor(Integer pack, String name) {
+    JsonProcessor(Integer pack, String name, Type type) {
         this.pack = pack
         this.name = name
+        this.type=type
     }
 
     @Override
@@ -30,7 +32,7 @@ class JsonProcessor implements Processor {
         def url = "http://vod.ddnb.tn/channels.php?login=%25s&pack_id=${pack}"
         LOG.info("Processing {}", url);
         def http = new HTTPBuilder(url)
-        def out = new Group(name, Type.MOVIE, [])
+        def out = new Group(name, type, [])
         http.request(Method.GET, ContentType.TEXT) { req ->
             response.success = { resp, reader ->
                 def jsonSlurper = new JsonSlurper()
