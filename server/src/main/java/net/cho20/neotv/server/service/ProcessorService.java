@@ -1,26 +1,38 @@
 package net.cho20.neotv.server.service;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static org.codehaus.groovy.runtime.DefaultGroovyMethods.collect;
+
 import net.cho20.neotv.script.bean.Group;
+import net.cho20.neotv.script.bean.Movie;
 import net.cho20.neotv.script.bean.Stream;
+import net.cho20.neotv.script.service.JsonProcessor;
+import net.cho20.neotv.script.service.M3uProcessor;
 import net.cho20.neotv.script.service.Processor;
 import org.springframework.scheduling.annotation.Scheduled;
 
 public class ProcessorService {
 
-    private Processor processor;
+    private Collection<Processor> processors = new ArrayList<>();
     private Iterable<Group> groups;
 
     public ProcessorService(String code, String api, String groups) {
-        this.processor = new Processor(code, api, groups.split(";"));
+        this.processors.add(new M3uProcessor(code, api, groups.split(";")));
+        this.processors.add(new JsonProcessor(309, "Cartoon FR"));
     }
 
     @Scheduled(fixedDelay = 1 * 3600 * 1000)
     public void process() {
-        groups = processor.process();
+        groups = processors
+                .stream()
+                .map(Processor::process)
+                .flatMap((Function<Iterable<Group>, java.util.stream.Stream<Group>>) gr -> StreamSupport.stream(gr.spliterator(), false))
+                .collect(Collectors.toList());
     }
 
 
@@ -33,11 +45,18 @@ public class ProcessorService {
                                 group.getType(),
                                 StreamSupport.stream(group.getStreams().spliterator(), false)
                                         .map((Function<Stream, net.cho20.neotv.server.bean.Stream>) stream ->
-                                                new net.cho20.neotv.server.bean.Stream(stream.getTitle(), stream.buildUrl(code))
-                                        )
-                                        .collect(Collectors.toList())
+                                            clone(code, stream)
+                                        ).collect(Collectors.toList())
                         )
                 )
                 ;
+    }
+
+    private net.cho20.neotv.server.bean.Stream clone(String code, net.cho20.neotv.script.bean.Stream stream){
+        net.cho20.neotv.server.bean.Stream out = new net.cho20.neotv.server.bean.Stream(stream.getTitle(), stream.buildUrl(code));
+        if(stream instanceof Movie){
+            out.setImage(((Movie) stream).getImage());
+        }
+        return out;
     }
 }

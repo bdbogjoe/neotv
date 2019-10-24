@@ -14,9 +14,9 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.regex.Pattern
 
-class Processor {
+class M3uProcessor implements Processor{
 
-    private static final Logger LOG = LoggerFactory.getLogger(Processor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(M3uProcessor.class);
 
     private final static Pattern CODE = Pattern.compile('(code=)(?:\\d+)')
 
@@ -31,7 +31,7 @@ class Processor {
     private final String api
     private final Storage storage
 
-    Processor(String code, String api, def groups) {
+    M3uProcessor(String code, String api, def groups) {
         this.url = 'http://neotv.siptv-list.com/siptv.m3u?code=' + code
         this.groups = groups.collect() as Set
         this.code = code
