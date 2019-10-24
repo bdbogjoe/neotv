@@ -11,10 +11,11 @@ java -jar script/build/libs/neotv.jar /
     --format=<html|json> /
     --output=<file name> /
 ```
+*Note : output is optional, if none then wil print in standart output*
+
 
 - to run full app
 ```
 java -Dapp.code=<neotv code> -jar server/build/libs/neotv-server-1.0.0.jar
 
 ```
-Note : output is optional, if none then wil print in standart output
