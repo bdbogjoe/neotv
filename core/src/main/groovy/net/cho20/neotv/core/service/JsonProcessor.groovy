@@ -18,12 +18,15 @@ class JsonProcessor implements Processor {
     private final String name
     private final Type type
 
+    private Storage storage
+
     private static final Logger LOG = LoggerFactory.getLogger(JsonProcessor.class);
 
-    JsonProcessor(Integer pack, String name, Type type) {
+    JsonProcessor(Storage storage, Integer pack, String name, Type type) {
         this.pack = pack
         this.name = name
         this.type=type
+        this.storage=storage
     }
 
     @Override
@@ -38,15 +41,22 @@ class JsonProcessor implements Processor {
                 def jsonSlurper = new JsonSlurper()
                 def content = jsonSlurper.parse(reader);
                 for (ch in content.channels) {
-                    out.streams.add(new Movie(
-                            title: ch.name,
-                            url: ch.ch,
-                            image: ch.logo,
-                            overview: ch.desc,
-                            date: new SimpleDateFormat('YYYY-MM-dd').parse(ch.date),
-                            publish: now,
-                    )
-                    )
+                    def video = storage?.find(ch.name)
+                    if (!video) {
+                        video = new Movie(
+                                title: ch.name,
+                                url: ch.ch,
+                                image: ch.logo,
+                                overview: ch.desc,
+                                date: new SimpleDateFormat('YYYY-MM-dd').parse(ch.date),
+                                publish: now
+                        )
+                        if (storage) {
+                            storage.insert(video)
+                        }
+
+                    }
+                    out.streams.add(video)
                 }
 
             }

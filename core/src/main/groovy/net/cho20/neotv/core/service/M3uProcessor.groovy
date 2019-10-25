@@ -14,9 +14,9 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.regex.Pattern
 
-class M3uProcessor implements Processor{
+class M3uProcessor implements Processor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(M3uProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(M3uProcessor.class)
 
     private final static Pattern CODE = Pattern.compile('(code=)(?:\\d+)')
 
@@ -30,13 +30,15 @@ class M3uProcessor implements Processor{
     private final String code
     private final String api
     private final Storage storage
+    private final boolean wait
 
-    M3uProcessor(String code, String api, def groups) {
+    M3uProcessor(Storage storage, boolean wait, String code, String api, def groups) {
         this.url = 'http://neotv.siptv-list.com/siptv.m3u?code=' + code
         this.groups = groups.collect() as Set
         this.code = code
         this.api = api
-        this.storage = new Storage()
+        this.wait=wait
+        this.storage=storage
     }
 
     Iterable<Group> process() {
@@ -47,7 +49,7 @@ class M3uProcessor implements Processor{
         def http = new HTTPBuilder(url)
         http.request(Method.GET, ContentType.TEXT) { req ->
             response.success = { resp, reader ->
-                reader.eachLine{ line->
+                reader.eachLine { line ->
                     def m = p.matcher(line)
                     if (m.find()) {
                         def g = m.group(1)
@@ -57,7 +59,7 @@ class M3uProcessor implements Processor{
                                 currentGroup = new Group(name: g)
                                 if (g.contains('VOD')) {
                                     currentGroup.type = Type.MOVIE
-                                }else{
+                                } else {
                                     currentGroup.type = Type.TV
                                 }
                                 foundGroup << currentGroup
@@ -68,14 +70,13 @@ class M3uProcessor implements Processor{
                         if (currentGroup) {
                             def title = m.group(2)
                             if (currentGroup.type == Type.MOVIE) {
-                                def video = storage.find(title)
+                                def video = storage?.find(title)
                                 if (!video) {
                                     video = new Movie(title: title, publish: now)
-                                    //executor.submit(new MovieLoader(storage, api, video))
                                 }
                                 currentGroup.streams << video
-                                if (!video.id) {
-                                    //executor.submit(new MovieLoader(storage, api, video))
+                                if (storage && !video.id) {
+                                    executor.submit(new MovieLoader(storage, api, video))
                                 }
                             } else {
                                 currentGroup.streams << new Stream(title: title)
@@ -98,9 +99,11 @@ class M3uProcessor implements Processor{
             }
         }
         executor.shutdown()
-        while (!executor.isTerminated()) {
-            println "waiting..., remaining tasks : " + executor.queue.size()
-            Thread.currentThread().sleep(1000)
+        if(wait) {
+            while (!executor.isTerminated()) {
+                LOG.debug("Waiting..., remaining tasks : " + executor.queue.size())
+                Thread.currentThread().sleep(1000)
+            }
         }
         foundGroup.each { Group g ->
             g.streams.each { v ->
