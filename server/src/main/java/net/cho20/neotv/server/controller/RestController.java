@@ -29,6 +29,11 @@ public class RestController {
         return processorService.getGroups(code).collect(Collectors.toList());
     }
 
+    @RequestMapping("/search")
+    public Iterable<net.cho20.neotv.core.bean.Group> groups(@RequestParam(value = "code") String code,@RequestParam(value = "type", required = false) String type,@RequestParam(value = "name") String name) {
+        return filterByTypeAndName(code, type!=null?Type.valueOf(type):null, name);
+    }
+
     @RequestMapping("/movies")
     public Iterable<net.cho20.neotv.core.bean.Group> movies(@RequestParam(value = "code") String code) {
         return filterByType(code, Type.MOVIE);
@@ -52,7 +57,7 @@ public class RestController {
     }
     private Iterable<net.cho20.neotv.core.bean.Group> filterByTypeAndName(String code, Type type, String... name) {
         return processorService.getGroups(code)
-                .filter(group -> group.getType()==type)
+                .filter(group -> type==null || group.getType()==type)
                 .map(mapGroup -> new Group<Map<String, String>>(
                         mapGroup.getName(),
                         mapGroup.getType(),
