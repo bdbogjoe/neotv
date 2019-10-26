@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 
 import java.text.SimpleDateFormat
 
-class MovieLoader implements Runnable{
+class MovieLoader implements Runnable {
     private String db = 'https://api.themoviedb.org/3/search/movie'
 
     private static final Logger LOG = LoggerFactory.getLogger(MovieLoader.class);
@@ -21,8 +21,8 @@ class MovieLoader implements Runnable{
     private Storage storage
 
     MovieLoader(Storage storage, String api, Movie movie) {
-        this.storage=storage
-        this.api=api
+        this.storage = storage
+        this.api = api
         this.movie = movie
     }
 
@@ -52,6 +52,7 @@ class MovieLoader implements Runnable{
                         movie.date = new SimpleDateFormat("yyyy-MM-dd").parse(result.release_date)
                     }
                     movie.image = result.poster_path
+                    storage.update(movie)
                 }
             }
 
@@ -66,7 +67,7 @@ class MovieLoader implements Runnable{
                 run()
             }
         }
-        if(movie.url && storage){
+        if (movie.url && storage) {
             storage.insert(movie)
         }
     }

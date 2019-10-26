@@ -49,7 +49,7 @@ public class RestController {
 
     @RequestMapping("/sport")
     public Iterable<net.cho20.neotv.core.bean.Group> sport(@RequestParam(value = "code") String code) {
-        return filterByTypeAndName(code, Type.TV, "sport");
+        return filterByTypeAndName(code, Type.TV, ".*[sS]port.*", "^Canal\\+$");
     }
 
     private Iterable<net.cho20.neotv.core.bean.Group> filterByType(String code, Type type) {
@@ -62,7 +62,7 @@ public class RestController {
                         mapGroup.getName(),
                         mapGroup.getType(),
                         StreamSupport.stream(mapGroup.getStreams().spliterator(), false)
-                                .filter(stringStringMap -> Arrays.stream(name).anyMatch(s -> stringStringMap.get("title").toUpperCase().contains(s.toUpperCase())))
+                                .filter(stringStringMap -> Arrays.stream(name).anyMatch(s -> stringStringMap.get("title").matches(s)))
                                 .collect(Collectors.toList())
             ))
                 .filter(group-> group.getStreams().iterator().hasNext())

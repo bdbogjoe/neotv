@@ -6,14 +6,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static org.codehaus.groovy.runtime.DefaultGroovyMethods.collect;
-
 import net.cho20.neotv.core.bean.Group;
 import net.cho20.neotv.core.bean.Movie;
 import net.cho20.neotv.core.bean.Stream;
 import net.cho20.neotv.core.bean.Type;
-import net.cho20.neotv.core.service.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import net.cho20.neotv.core.service.JsonProcessor;
+import net.cho20.neotv.core.service.M3uProcessor;
+import net.cho20.neotv.core.service.Processor;
+import net.cho20.neotv.core.service.Storage;
 import org.springframework.scheduling.annotation.Scheduled;
 
 public class ProcessorService {
@@ -44,7 +44,8 @@ public class ProcessorService {
                                 group.getName(),
                                 group.getType(),
                                 StreamSupport.stream(group.getStreams().spliterator(), false)
-                                        .map((Function<Stream, Map<String, String>>) stream ->
+                                        .sorted()
+                                        .map(stream ->
                                                 clone(code, stream)
                                         ).collect(Collectors.toList())
                         )

@@ -5,6 +5,7 @@ import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
 import net.cho20.neotv.core.bean.Group
 import net.cho20.neotv.core.bean.Movie
+import net.cho20.neotv.core.bean.MovieEntity
 import net.cho20.neotv.core.bean.Stream
 import net.cho20.neotv.core.bean.Type
 import org.slf4j.Logger
@@ -14,7 +15,9 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.regex.Pattern
 
-class M3uProcessor implements Processor {
+class M3uProcessor implements Processor, MovieConverter {
+
+
 
     private static final Logger LOG = LoggerFactory.getLogger(M3uProcessor.class)
 
@@ -37,8 +40,8 @@ class M3uProcessor implements Processor {
         this.groups = groups.collect() as Set
         this.code = code
         this.api = api
-        this.wait=wait
-        this.storage=storage
+        this.wait = wait
+        this.storage = storage
     }
 
     Iterable<Group> process() {
@@ -71,13 +74,16 @@ class M3uProcessor implements Processor {
                             def title = m.group(2)
                             if (currentGroup.type == Type.MOVIE) {
                                 def video = storage?.find(title)
-                                if (!video) {
+                                if (video) {
+                                    video = convert(video)
+                                } else {
                                     video = new Movie(title: title, publish: now)
+                                    if (storage) {
+                                        storage.insert(video)
+                                        executor.submit(new MovieLoader(storage, api, video))
+                                    }
                                 }
                                 currentGroup.streams << video
-                                if (storage && !video.id) {
-                                    executor.submit(new MovieLoader(storage, api, video))
-                                }
                             } else {
                                 currentGroup.streams << new Stream(title: title)
                             }
@@ -99,20 +105,10 @@ class M3uProcessor implements Processor {
             }
         }
         executor.shutdown()
-        if(wait) {
+        if (wait) {
             while (!executor.isTerminated()) {
                 LOG.debug("Waiting..., remaining tasks : " + executor.queue.size())
                 Thread.currentThread().sleep(1000)
-            }
-        }
-        foundGroup.each { Group g ->
-            g.streams.each { v ->
-                //Need to store it
-                if (v instanceof Movie) {
-                    if (!v.id) {
-                        storage.insert(v)
-                    }
-                }
             }
         }
         return foundGroup

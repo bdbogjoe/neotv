@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory
 
 import java.text.SimpleDateFormat
 
-class JsonProcessor implements Processor {
+class JsonProcessor implements Processor , MovieConverter{
     private final Integer pack
     private final String name
     private final Type type
@@ -42,7 +42,9 @@ class JsonProcessor implements Processor {
                 def content = jsonSlurper.parse(reader);
                 for (ch in content.channels) {
                     def video = storage?.find(ch.name)
-                    if (!video) {
+                    if (video) {
+                        video = convert(video)
+                    }else {
                         video = new Movie(
                                 title: ch.name,
                                 url: ch.ch,

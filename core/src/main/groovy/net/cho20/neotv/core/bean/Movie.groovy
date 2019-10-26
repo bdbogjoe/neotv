@@ -1,6 +1,6 @@
 package net.cho20.neotv.core.bean
 
-class Movie extends Stream implements Comparable<Movie>{
+class Movie extends Stream implements Comparable<Movie>, MovieAble{
 
     Integer id_db
     String image
