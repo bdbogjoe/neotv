@@ -12,9 +12,8 @@ import net.cho20.neotv.core.bean.Group;
 import net.cho20.neotv.core.bean.Movie;
 import net.cho20.neotv.core.bean.Stream;
 import net.cho20.neotv.core.bean.Type;
-import net.cho20.neotv.core.service.JsonProcessor;
-import net.cho20.neotv.core.service.M3uProcessor;
-import net.cho20.neotv.core.service.Processor;
+import net.cho20.neotv.core.service.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 
 public class ProcessorService {
@@ -22,10 +21,11 @@ public class ProcessorService {
     private Collection<Processor> processors = new ArrayList<>();
     private Iterable<Group<Stream>> groups = Collections.emptyList();
 
-    public ProcessorService(String code, String api, String groups) {
-        this.processors.add(new M3uProcessor(code, api, groups.split(";")));
-        this.processors.add(new JsonProcessor(309, "Cartoon FR", Type.CARTOON));
+    public ProcessorService(Storage storage, String code, String api, String groups) {
+        this.processors.add(new M3uProcessor(storage,false, code, api, groups.split(";")));
+        this.processors.add(new JsonProcessor(storage, 309, "Cartoon FR", Type.CARTOON));
     }
+
 
     @Scheduled(fixedDelay = 1 * 3600 * 1000)
     public void process() {
@@ -66,6 +66,9 @@ public class ProcessorService {
                 out.put("image", image);
             }
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if(((Movie) stream).getOverview()!=null) {
+                out.put("overview", ((Movie) stream).getOverview());
+            }
             if(((Movie) stream).getDate()!=null) {
                 out.put("date", sdf.format(((Movie) stream).getDate()));
             }

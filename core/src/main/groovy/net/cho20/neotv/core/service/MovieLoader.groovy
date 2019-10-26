@@ -35,7 +35,7 @@ class MovieLoader implements Runnable{
             println "Unexpected failure: ${resp.statusLine}"
         }
         http.request(Method.GET, ContentType.TEXT) { req ->
-            uri.query = [api_key: api, language: 'fr_FR', query: movie.title, include_adult: false]
+            uri.query = [api_key: api, language: 'fr', query: movie.title, include_adult: false]
 
             response.success = { resp, reader ->
                 assert resp.status == 200
@@ -66,7 +66,7 @@ class MovieLoader implements Runnable{
                 run()
             }
         }
-        if(movie.url){
+        if(movie.url && storage){
             storage.insert(movie)
         }
     }

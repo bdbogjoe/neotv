@@ -3,6 +3,7 @@ package net.cho20.neotv.script
 
 import groovy.json.JsonBuilder
 import groovy.xml.MarkupBuilder
+import net.cho20.neotv.core.service.DbStorage
 import net.cho20.neotv.core.service.M3uProcessor
 
 import java.text.SimpleDateFormat
@@ -22,7 +23,7 @@ class Main {
 
         if(options){
             try {
-                def processor = new M3uProcessor(options.code, options.api, options.groups ?: null)
+                def processor = new M3uProcessor(new DbStorage(), true, options.code, options.api, options.groups ?: null)
                 def groups = processor.process().sort()
                 if (options.output) {
                        def file = new File(options.output)
