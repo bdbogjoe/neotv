@@ -22,3 +22,7 @@ processResources {
     expand(project.properties)
 }
 
+bootJar {
+    launchScript()
+}
+
