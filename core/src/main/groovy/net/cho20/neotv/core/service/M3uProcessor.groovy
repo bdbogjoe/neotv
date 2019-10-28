@@ -26,7 +26,7 @@ class M3uProcessor implements Processor, MovieConverter {
     private ExecutorService executor = Executors.newFixedThreadPool(3)
 
 
-    private Pattern p = Pattern.compile('(?:group-title="([^"]*)")?,(.*)$')
+    private Pattern p = Pattern.compile('(?:group-title="([^"]*)")?\\s*tvg-logo="([^"]*)",(.*)$')
 
     private final String url
     private final Set<String> groups
@@ -57,21 +57,33 @@ class M3uProcessor implements Processor, MovieConverter {
                     if (m.find()) {
                         def g = m.group(1)
                         if (g) {
-                            LOG.info("Found group {}", g)
-                            if (!groups || groups.contains(g)) {
-                                currentGroup = new Group(name: g)
-                                if (g.contains('VOD')) {
-                                    currentGroup.type = Type.MOVIE
-                                } else {
-                                    currentGroup.type = Type.TV
+                            if (!groups || groups.contains(g) ) {
+                                if(currentGroup?.name!=g) {
+                                    LOG.info("Found group : {}", g)
+                                    currentGroup = new Group(name: g)
+                                    if (g.contains('VOD')) {
+                                        currentGroup.type = Type.MOVIE
+                                    }else if(g.toLowerCase().contains("box")){
+                                        currentGroup.type = Type.BOX_OFFICE
+                                    } else {
+                                        currentGroup.type = Type.TV
+                                    }
+                                    foundGroup << currentGroup
                                 }
-                                foundGroup << currentGroup
                             } else {
                                 currentGroup = null
                             }
                         }
                         if (currentGroup) {
-                            def title = m.group(2)
+                            def logo = m.group(2)
+                            if(logo) {
+                                try {
+                                    new URL(logo).openStream()
+                                } catch (IOException ioe) {
+                                    logo = null
+                                }
+                            }
+                            def title = m.group(3)
                             if (currentGroup.type == Type.MOVIE) {
                                 def video = storage?.find(title)
                                 if (video) {
@@ -85,7 +97,7 @@ class M3uProcessor implements Processor, MovieConverter {
                                 }
                                 currentGroup.streams << video
                             } else {
-                                currentGroup.streams << new Stream(title: title)
+                                currentGroup.streams << new Stream(title: title, image: logo)
                             }
                         }
                     } else if (currentGroup && currentGroup.streams && line.startsWith("http")) {

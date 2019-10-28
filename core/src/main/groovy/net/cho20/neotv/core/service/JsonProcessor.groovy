@@ -42,21 +42,20 @@ class JsonProcessor implements Processor , MovieConverter{
                 def content = jsonSlurper.parse(reader);
                 for (ch in content.channels) {
                     def video = storage?.find(ch.name)
+                    def insert=false
                     if (video) {
                         video = convert(video)
                     }else {
-                        video = new Movie(
-                                title: ch.name,
-                                url: ch.ch,
-                                image: ch.logo,
-                                overview: ch.desc,
-                                date: new SimpleDateFormat('YYYY-MM-dd').parse(ch.date),
-                                publish: now
-                        )
-                        if (storage) {
-                            storage.insert(video)
-                        }
-
+                        insert=true
+                        video = new Movie(publish: now)
+                    }
+                    video.title=ch.name
+                    video.url=ch.ch
+                    video.image=ch.logo
+                    video.overview=ch.desc
+                    video.date=new SimpleDateFormat('YYYY-MM-dd').parse(ch.date)
+                    if (storage && insert) {
+                        storage.insert(video)
                     }
                     out.streams.add(video)
                 }

@@ -64,15 +64,10 @@ public class ProcessorService {
         Map<String, String> out = new LinkedHashMap<>();
         out.put("title", stream.getTitle());
         out.put("url", stream.buildUrl(code));
+        String image = stream.getImage();
         if(stream instanceof Movie){
-            String image;
             if(((Movie) stream).getId_db()!=null){
                image = "https://image.tmdb.org/t/p/w400"+((Movie) stream).getImage();
-            }else {
-                image = ((Movie) stream).getImage();
-            }
-            if(image!=null) {
-                out.put("image", image);
             }
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             if(((Movie) stream).getOverview()!=null) {
@@ -85,6 +80,10 @@ public class ProcessorService {
                 out.put("publish", sdf.format(((Movie) stream).getPublish()));
             }
         }
+        if(image!=null) {
+            out.put("image", image);
+        }
+
         return out;
     }
 }
