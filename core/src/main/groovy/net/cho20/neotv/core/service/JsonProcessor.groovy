@@ -64,4 +64,15 @@ class JsonProcessor implements Processor , MovieConverter{
         }
         return [out]
     }
+
+    public static void main(String[] args) {
+        for(int i=1;i<1000;i++){
+            def p = new JsonProcessor(null, i, "${i}", null)
+            def groups = p.process()
+            if(groups && groups[0].streams){
+                def stream = groups[0].streams[0]
+                println(i+"     "+stream.url+"     "+stream.title+"----"+stream.overview)
+            }
+        }
+    }
 }
