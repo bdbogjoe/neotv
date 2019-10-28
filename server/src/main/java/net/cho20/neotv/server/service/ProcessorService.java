@@ -14,9 +14,13 @@ import net.cho20.neotv.core.service.JsonProcessor;
 import net.cho20.neotv.core.service.M3uProcessor;
 import net.cho20.neotv.core.service.Processor;
 import net.cho20.neotv.core.service.Storage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
 public class ProcessorService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProcessorService.class);
 
     private Collection<Processor> processors = new ArrayList<>();
     private Iterable<Group<Stream>> groups = Collections.emptyList();
@@ -29,11 +33,15 @@ public class ProcessorService {
 
     @Scheduled(fixedDelay = 1 * 3600 * 1000)
     public void process() {
-        groups = processors
-                .stream()
-                .map(Processor::process)
-                .flatMap((Function<Iterable<Group<Stream>>, java.util.stream.Stream<Group<Stream>>>) gr -> StreamSupport.stream(gr.spliterator(), false))
-                .collect(Collectors.toList());
+        try {
+            groups = processors
+                    .stream()
+                    .map(Processor::process)
+                    .flatMap((Function<Iterable<Group<Stream>>, java.util.stream.Stream<Group<Stream>>>) gr -> StreamSupport.stream(gr.spliterator(), false))
+                    .collect(Collectors.toList());
+        }catch(Exception e){
+            LOG.error("Error while processing groups", e);
+        }
     }
 
 
