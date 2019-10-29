@@ -55,7 +55,7 @@ class MovieLoader implements Runnable {
                     def result = results.get(0)
                     movie.id_db = result.id
                     movie.overview = result.overview
-                    if (result.release_date) {
+                    if (result.release_date && !result.release_date.startsWith("00")) {
                         movie.date = new SimpleDateFormat("yyyy-MM-dd").parse(result.release_date)
                     }
                     movie.image = result.poster_path
