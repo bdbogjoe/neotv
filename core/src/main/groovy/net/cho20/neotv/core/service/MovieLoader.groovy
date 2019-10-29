@@ -4,6 +4,7 @@ import groovy.json.JsonSlurper
 import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
+import me.xdrop.fuzzywuzzy.FuzzySearch
 import net.cho20.neotv.core.bean.Movie
 import org.apache.commons.lang.StringUtils
 import org.slf4j.Logger
@@ -44,9 +45,9 @@ class MovieLoader implements Runnable {
                 def content = jsonSlurper.parse(reader)
                 if (content.total_results) {
                     def results = content.results.sort { row1, row2 ->
-                        int d1 = StringUtils.getLevenshteinDistance(row1.original_title, movie.title)
-                        int d2 = StringUtils.getLevenshteinDistance(row2.original_title, movie.title)
-                        int out = d1.compareTo(d2)
+                        int d1 = FuzzySearch.ratio(row1.original_title, movie.title)
+                        int d2 = FuzzySearch.ratio(row2.original_title, movie.title)
+                        int out = d2.compareTo(d1)
                         if(out==0) {
                             out = row2.popularity.compareTo(row1.popularity)
                         }

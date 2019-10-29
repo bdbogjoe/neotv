@@ -5,6 +5,7 @@ dependencies {
     runtimeOnly 'com.h2database:h2:1.4.199'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
     compile 'commons-cli:commons-cli:1.2'
+    compile 'me.xdrop:fuzzywuzzy:1.2.0'
     compile 'org.apache.httpcomponents:httpmime:4.3.5'
     compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7'
     compile 'org.codehaus.groovy:groovy-all:2.4.15'
