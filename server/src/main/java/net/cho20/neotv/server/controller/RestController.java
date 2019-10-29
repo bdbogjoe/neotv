@@ -4,6 +4,7 @@ package net.cho20.neotv.server.controller;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -56,7 +57,13 @@ public class RestController {
                         mapGroup.getName(),
                         mapGroup.getType(),
                         StreamSupport.stream(mapGroup.getStreams().spliterator(), false)
-                                .filter(stringStringMap -> Arrays.stream(name).anyMatch(s -> stringStringMap.get("title").matches(s)))
+                                .filter(stringStringMap ->
+                                        Arrays.stream(name).map(Pattern::compile).anyMatch(s -> {
+                                                    String title = stringStringMap.get("title");
+                                                    return s.matcher(title).find();
+                                                }
+                                        )
+                                )
                                 .sorted(new MapComparator(sorts))
                                 .collect(Collectors.toList())
                 ))
