@@ -5,6 +5,7 @@ import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
 import net.cho20.neotv.core.bean.Movie
+import org.apache.commons.lang.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -43,7 +44,13 @@ class MovieLoader implements Runnable {
                 def content = jsonSlurper.parse(reader)
                 if (content.total_results) {
                     def results = content.results.sort { row1, row2 ->
-                        row2.popularity.compareTo(row1.popularity)
+                        int d1 = StringUtils.getLevenshteinDistance(row1.original_title, movie.title)
+                        int d2 = StringUtils.getLevenshteinDistance(row2.original_title, movie.title)
+                        int out = d1.compareTo(d2)
+                        if(out==0) {
+                            out = row2.popularity.compareTo(row1.popularity)
+                        }
+                        return out
                     }
                     def result = results.get(0)
                     movie.id_db = result.id
@@ -58,10 +65,10 @@ class MovieLoader implements Runnable {
 
             // called only for a 404 (not found) status code:
             response.'404' = { resp ->
-                println 'Not found'
+                LOG.warn('Not found for {}', movie.title)
             }
             response.'401' = { resp ->
-                println "Access denied"
+                LOG.warn("Access denied for : {}", movie.title)
             }
             response.'429' = {
                 run()

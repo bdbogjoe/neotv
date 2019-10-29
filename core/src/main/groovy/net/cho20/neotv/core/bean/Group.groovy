@@ -6,7 +6,7 @@ import groovy.transform.ToString
 class Group<T> {
     String name
     Type type
-    Iterable<T> streams = []
+    Iterable<T> streams = [] as LinkedHashSet
 
     Group(){
 

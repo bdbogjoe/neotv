@@ -60,15 +60,20 @@ class M3uProcessor implements Processor, MovieConverter {
                             if (!groups || groups.contains(g) ) {
                                 if(currentGroup?.name!=g) {
                                     LOG.info("Found group : {}", g)
-                                    currentGroup = new Group(name: g)
-                                    if (g.contains('VOD')) {
-                                        currentGroup.type = Type.MOVIE
-                                    }else if(g.toLowerCase().contains("box")){
-                                        currentGroup.type = Type.BOX_OFFICE
-                                    } else {
-                                        currentGroup.type = Type.TV
+                                    currentGroup = foundGroup.find {
+                                        it.name==g
                                     }
-                                    foundGroup << currentGroup
+                                    if(!currentGroup) {
+                                        currentGroup = new Group(name: g)
+                                        if (g.contains('VOD')) {
+                                            currentGroup.type = Type.MOVIE
+                                        }else if(g.toLowerCase().contains("box")){
+                                            currentGroup.type = Type.BOX_OFFICE
+                                        } else {
+                                            currentGroup.type = Type.TV
+                                        }
+                                        foundGroup << currentGroup
+                                    }
                                 }
                             } else {
                                 currentGroup = null
@@ -91,7 +96,6 @@ class M3uProcessor implements Processor, MovieConverter {
                                 } else {
                                     video = new Movie(title: title, publish: now)
                                     if (storage) {
-                                        storage.insert(video)
                                         executor.submit(new MovieLoader(storage, api, video))
                                     }
                                 }
@@ -123,6 +127,7 @@ class M3uProcessor implements Processor, MovieConverter {
                 Thread.currentThread().sleep(1000)
             }
         }
+        LOG.info("Processed : {}", url)
         return foundGroup
     }
 }

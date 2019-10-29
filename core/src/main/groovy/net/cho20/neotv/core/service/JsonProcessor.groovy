@@ -62,6 +62,7 @@ class JsonProcessor implements Processor , MovieConverter{
 
             }
         }
+        LOG.info("Processed {}", url);
         return [out]
     }
 

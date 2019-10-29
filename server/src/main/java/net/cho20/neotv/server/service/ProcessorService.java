@@ -52,13 +52,14 @@ public class ProcessorService {
                                 group.getName(),
                                 group.getType(),
                                 StreamSupport.stream(group.getStreams().spliterator(), false)
-                                        .sorted()
-                                        .map(stream ->
-                                                clone(code, stream)
-                                        ).collect(Collectors.toList())
+                                        .map(stream -> clone(code, stream))
+                                        .collect(Collectors.toList())
                         )
                 );
     }
+
+
+
 
     private Map<String, String> clone(String code, net.cho20.neotv.core.bean.Stream stream){
         Map<String, String> out = new LinkedHashMap<>();
