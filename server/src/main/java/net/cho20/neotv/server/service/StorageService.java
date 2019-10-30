@@ -3,6 +3,7 @@ package net.cho20.neotv.server.service;
 import java.util.Date;
 
 import net.cho20.neotv.core.bean.Movie;
+import net.cho20.neotv.core.bean.MovieAble;
 import net.cho20.neotv.core.service.DbStorage;
 import net.cho20.neotv.core.bean.MovieEntity;
 import net.cho20.neotv.core.service.Storage;
@@ -21,12 +22,12 @@ public class StorageService implements InitializingBean, Storage {
     }
 
     @Override
-    public MovieEntity find(String title) {
+    public MovieAble find(String title) {
         return storage.find(title);
     }
 
     @Override
-    public Iterable<MovieEntity> findAfter(Date date) {
+    public Iterable<MovieAble> findAfter(Date date) {
         return storage.findAfter(date);
     }
 

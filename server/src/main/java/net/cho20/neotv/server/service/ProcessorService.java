@@ -36,7 +36,14 @@ public class ProcessorService {
         try {
             groups = processors
                     .stream()
-                    .map(Processor::process)
+                    .map((Function<Processor, Iterable<Group<Stream>>>) processor -> {
+                        try {
+                            return processor.process();
+                        }catch(Exception e){
+                            LOG.warn("Error while loading group", e);
+                            return Collections.emptyList();
+                        }
+                    })
                     .flatMap((Function<Iterable<Group<Stream>>, java.util.stream.Stream<Group<Stream>>>) gr -> StreamSupport.stream(gr.spliterator(), false))
                     .collect(Collectors.toList());
         }catch(Exception e){
