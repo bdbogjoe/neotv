@@ -2,6 +2,7 @@ package net.cho20.neotv.server.controller;
 
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -20,6 +21,7 @@ public class RestController {
 
     private final ProcessorService processorService;
     private String[] sorts = {"publish", "date", "title"};
+    private Collection<String> revers = Arrays.stream(new String[]{"publish", "date"}).collect(Collectors.toSet());
 
     public RestController(ProcessorService processorService) {
         this.processorService = processorService;
@@ -39,7 +41,7 @@ public class RestController {
                         mapGroup.getName(),
                         mapGroup.getType(),
                         StreamSupport.stream(mapGroup.getStreams().spliterator(), false)
-                                .sorted(new MapComparator(sorts))
+                                .sorted(new MapComparator(sorts, revers))
                                 .collect(Collectors.toList())
                 ))
                 .collect(Collectors.toList());
@@ -64,7 +66,7 @@ public class RestController {
                                                 }
                                         )
                                 )
-                                .sorted(new MapComparator(sorts))
+                                .sorted(new MapComparator(sorts, revers))
                                 .collect(Collectors.toList())
                 ))
                 .filter(group -> group.getStreams().iterator().hasNext())
@@ -83,7 +85,7 @@ public class RestController {
                                 mapGroup.getName(),
                                 mapGroup.getType(),
                                 StreamSupport.stream(mapGroup.getStreams().spliterator(), false)
-                                        .sorted(new MapComparator(sorts))
+                                        .sorted(new MapComparator(sorts, revers))
                                         .collect(Collectors.toList())
                         )
                 )
@@ -107,10 +109,12 @@ public class RestController {
 
     private static class MapComparator implements Comparator<Map<String, String>> {
 
-        private String[] sorts;
+        private final String[] sorts;
+        private final Collection<String> revers;
 
-        protected MapComparator(String[] sorts) {
+        protected MapComparator(String[] sorts, Collection<String> revers) {
             this.sorts = sorts;
+            this.revers=revers;
         }
 
         @Override
@@ -119,6 +123,9 @@ public class RestController {
             for (String p : sorts) {
                 out = compare(o1, o2, p);
                 if (out != 0) {
+                    if(revers.contains(p)){
+                        out = -out;
+                    }
                     break;
                 }
             }
