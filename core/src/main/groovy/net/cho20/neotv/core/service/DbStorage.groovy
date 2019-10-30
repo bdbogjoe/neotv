@@ -1,11 +1,10 @@
 package net.cho20.neotv.core.service
 
 import groovy.sql.Sql
-import net.cho20.neotv.core.bean.Movie
 import net.cho20.neotv.core.bean.MovieAble
 import net.cho20.neotv.core.bean.MovieEntity
 
-class DbStorage implements Storage {
+class DbStorage implements Storage, Closeable {
 
     def moviesProps = new MovieEntity().properties.keySet().findAll({ it != 'class' })
 
@@ -36,13 +35,13 @@ CREATE TABLE MOVIES (
         }
     }
 
-    void insert(Movie video){
+    void insert(MovieAble video){
         sql.executeUpdate("insert into MOVIES(id_db, title, image, overview, date, publish) values(:id_db, :title, :image, :overview, :date, :publish)", video.properties)
         sql.commit()
     }
 
-    void update(Movie video){
-        sql.executeUpdate("delete from MOVIES where id=?", [video.id])
+    void update(MovieAble video){
+        sql.executeUpdate("delete from MOVIES where title=?", [video.title])
         insert(video)
     }
 

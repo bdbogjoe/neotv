@@ -3,7 +3,7 @@ package net.cho20.neotv.core.bean
 import groovy.transform.ToString
 
 @ToString(includes = ["title", "url"])
-class Stream {
+class StreamBean {
     String title
     String url
     String image
@@ -14,9 +14,9 @@ class Stream {
 
     boolean equals(o) {
         if (this.is(o)) return true
-        if (!(o instanceof Stream)) return false
+        if (!(o instanceof StreamBean)) return false
 
-        Stream stream = (Stream) o
+        StreamBean stream = (StreamBean) o
 
         if (title != stream.title) return false
 

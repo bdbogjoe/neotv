@@ -1,7 +1,7 @@
 package net.cho20.neotv.server;
 
-import net.cho20.neotv.core.service.Storage;
 import net.cho20.neotv.server.service.ProcessorService;
+import net.cho20.neotv.server.service.StorageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,7 +17,7 @@ public class Application {
 
 
     @Bean
-    public ProcessorService getProcessorService(Storage storage, @Value("${app.code}") String code, @Value("${app.api}") String api, @Value("${app.groups}") String groups) {
+    public ProcessorService getProcessorService(StorageService storage, @Value("${app.code}") String code, @Value("${app.api}") String api, @Value("${app.groups}") String groups) {
         return new ProcessorService(storage, code, api, groups);
     }
 

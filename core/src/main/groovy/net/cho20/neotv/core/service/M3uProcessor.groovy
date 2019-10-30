@@ -4,9 +4,8 @@ import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
 import net.cho20.neotv.core.bean.Group
-import net.cho20.neotv.core.bean.Movie
-import net.cho20.neotv.core.bean.MovieEntity
-import net.cho20.neotv.core.bean.Stream
+import net.cho20.neotv.core.bean.MovieBean
+import net.cho20.neotv.core.bean.StreamBean
 import net.cho20.neotv.core.bean.Type
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -94,14 +93,14 @@ class M3uProcessor implements Processor, MovieConverter {
                                 if (video) {
                                     video = convert(video)
                                 } else {
-                                    video = new Movie(title: title, publish: now)
+                                    video = new MovieBean(title: title, publish: now)
                                     if (storage) {
                                         executor.submit(new MovieLoader(storage, api, video))
                                     }
                                 }
                                 currentGroup.streams << video
                             } else {
-                                currentGroup.streams << new Stream(title: title, image: logo)
+                                currentGroup.streams << new StreamBean(title: title, image: logo)
                             }
                         }
                     } else if (currentGroup && currentGroup.streams && line.startsWith("http")) {

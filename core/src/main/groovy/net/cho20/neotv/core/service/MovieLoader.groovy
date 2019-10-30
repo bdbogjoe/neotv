@@ -5,8 +5,7 @@ import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
 import me.xdrop.fuzzywuzzy.FuzzySearch
-import net.cho20.neotv.core.bean.Movie
-import org.apache.commons.lang.StringUtils
+import net.cho20.neotv.core.bean.MovieBean
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -18,11 +17,11 @@ class MovieLoader implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(MovieLoader.class);
 
 
-    private Movie movie
+    private MovieBean movie
     private String api
     private Storage storage
 
-    MovieLoader(Storage storage, String api, Movie movie) {
+    MovieLoader(Storage storage, String api, MovieBean movie) {
         this.storage = storage
         this.api = api
         this.movie = movie

@@ -6,7 +6,7 @@ import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
 import net.cho20.neotv.core.bean.Group
-import net.cho20.neotv.core.bean.Movie
+import net.cho20.neotv.core.bean.MovieBean
 import net.cho20.neotv.core.bean.Type
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -47,7 +47,7 @@ class JsonProcessor implements Processor , MovieConverter{
                         video = convert(video)
                     }else {
                         insert=true
-                        video = new Movie(publish: now)
+                        video = new MovieBean(publish: now)
                     }
                     video.title=ch.name
                     video.url=ch.ch

@@ -1,9 +1,9 @@
 package net.cho20.neotv.core.service;
 
 import net.cho20.neotv.core.bean.Group;
-import net.cho20.neotv.core.bean.Stream;
+import net.cho20.neotv.core.bean.StreamBean;
 
 public interface Processor {
 
-    Iterable<Group<Stream>> process() ;
+    Iterable<Group<StreamBean>> process() ;
 }

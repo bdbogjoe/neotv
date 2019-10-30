@@ -2,41 +2,37 @@ package net.cho20.neotv.server.service;
 
 import java.util.Date;
 
-import net.cho20.neotv.core.bean.Movie;
-import net.cho20.neotv.core.service.DbStorage;
-import net.cho20.neotv.core.bean.MovieEntity;
+import net.cho20.neotv.core.bean.MovieAble;
 import net.cho20.neotv.core.service.Storage;
-import org.springframework.beans.factory.InitializingBean;
+import net.cho20.neotv.server.persistence.JpaStorage;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StorageService implements InitializingBean, Storage {
+public class StorageService implements Storage {
 
-    private Storage storage;
+    private final Storage storage;
 
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        storage = new DbStorage();
+    public StorageService(JpaStorage storage) {
+        this.storage = storage;
     }
 
     @Override
-    public MovieEntity find(String title) {
+    public MovieAble find(String title) {
         return storage.find(title);
     }
 
     @Override
-    public Iterable<MovieEntity> findAfter(Date date) {
+    public Iterable<MovieAble> findAfter(Date date) {
         return storage.findAfter(date);
     }
 
     @Override
-    public void insert(Movie movie) {
+    public void insert(MovieAble movie) {
         storage.insert(movie);
     }
 
     @Override
-    public void update(Movie movie) {
+    public void update(MovieAble movie) {
         storage.update(movie);
     }
 }

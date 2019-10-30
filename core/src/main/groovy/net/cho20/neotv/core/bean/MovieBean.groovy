@@ -1,6 +1,6 @@
 package net.cho20.neotv.core.bean
 
-class Movie extends Stream implements MovieAble{
+class MovieBean extends StreamBean implements MovieAble{
 
     Integer id_db
     String overview
