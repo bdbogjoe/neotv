@@ -13,7 +13,6 @@ import net.cho20.neotv.core.bean.Type;
 import net.cho20.neotv.core.service.JsonProcessor;
 import net.cho20.neotv.core.service.M3uProcessor;
 import net.cho20.neotv.core.service.Processor;
-import net.cho20.neotv.core.service.Storage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -36,7 +35,14 @@ public class ProcessorService {
         try {
             groups = processors
                     .stream()
-                    .map(Processor::process)
+                    .map((Function<Processor, Iterable<Group<StreamBean>>>) processor -> {
+                        try {
+                            return processor.process();
+                        }catch(Exception e){
+                            LOG.warn("Error while loading group", e);
+                            return Collections.emptyList();
+                        }
+                    })
                     .flatMap((Function<Iterable<Group<StreamBean>>, java.util.stream.Stream<Group<StreamBean>>>) gr -> StreamSupport.stream(gr.spliterator(), false))
                     .collect(Collectors.toList());
         }catch(Exception e){
