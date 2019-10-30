@@ -11,6 +11,8 @@ public interface MovieRepository extends JpaRepository<MovieEntity, Long> {
 
     MovieEntity findByTitle(String title);
 
-    List<MovieEntity> findAllByDateAfter(Date date);
+    List<MovieEntity> findAllByPublishAfter(Date date);
+
+    MovieEntity findByTmdb(Integer tmdb);
 
 }

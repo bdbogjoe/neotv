@@ -1,7 +1,7 @@
 package net.cho20.neotv.core.service
 
 import groovy.sql.Sql
-import net.cho20.neotv.core.bean.MovieAble
+import net.cho20.neotv.core.bean.Movie
 import net.cho20.neotv.core.bean.MovieEntity
 
 class DbStorage implements Storage, Closeable {
@@ -35,17 +35,17 @@ CREATE TABLE MOVIES (
         }
     }
 
-    void insert(MovieAble video){
+    void insert(Movie video){
         sql.executeUpdate("insert into MOVIES(id_db, title, image, overview, date, publish) values(:id_db, :title, :image, :overview, :date, :publish)", video.properties)
         sql.commit()
     }
 
-    void update(MovieAble video){
+    void update(Movie video){
         sql.executeUpdate("delete from MOVIES where title=?", [video.title])
         insert(video)
     }
 
-    Iterable<MovieAble> findAfter(Date date=null){
+    Iterable<Movie> findAfter(Date date=null){
         if(!date){
             sql.eachRow("select max(publish) publish from movie", {
                 date = row.publish
@@ -67,7 +67,7 @@ CREATE TABLE MOVIES (
         return video
     }
 
-    MovieAble find(String title){
+    Movie find(String title){
         def video
         sql.eachRow("select * from MOVIES where title=?", [title], { row ->
             video = bind(row)

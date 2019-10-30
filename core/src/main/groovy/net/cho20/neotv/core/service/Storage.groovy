@@ -1,11 +1,11 @@
 package net.cho20.neotv.core.service
 
 
-import net.cho20.neotv.core.bean.MovieAble
+import net.cho20.neotv.core.bean.Movie
 
 interface Storage {
-    MovieAble find(String title)
-    Iterable<MovieAble> findAfter(Date date);
-    void insert(MovieAble movie)
-    void update(MovieAble movie)
+    Movie find(String title)
+    Iterable<Movie> findAfter(Date date);
+    void insert(Movie movie)
+    void update(Movie movie)
 }

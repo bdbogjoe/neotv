@@ -1,8 +1,8 @@
 package net.cho20.neotv.core.bean
 
-class MovieEntity implements MovieAble{
+class MovieEntity implements Movie{
     Integer id
-    Integer id_db
+    Integer tmdb
     String title
     String image
     String overview

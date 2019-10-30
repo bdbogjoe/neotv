@@ -73,8 +73,8 @@ public class ProcessorService {
         out.put("url", stream.buildUrl(code));
         String image = stream.getImage();
         if(stream instanceof MovieBean){
-            if(((MovieBean) stream).getId_db()!=null){
-               image = "https://image.tmdb.org/t/p/w400"+((MovieBean) stream).getImage();
+            if(((MovieBean) stream).getTmdb()!=null){
+               image = "https://image.tmdb.org/t/p/w400"+ stream.getImage();
             }
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             if(((MovieBean) stream).getOverview()!=null) {

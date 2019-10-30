@@ -4,28 +4,28 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-
 import java.util.Date;
 
-import net.cho20.neotv.core.bean.MovieAble;
-import org.hibernate.validator.constraints.UniqueElements;
+import net.cho20.neotv.core.bean.MovieVod;
 
 @Entity
-public class MovieEntity implements MovieAble {
+public class MovieEntity implements MovieVod {
 
     @Id
     @GeneratedValue
     private Integer id;
 
     @Column(unique = true)
-    private Integer id_db;
+    private Integer tmdb;
 
     @Column(unique = true)
     private String title;
 
     private String image;
+    @Column(length = 2048)
     private String overview;
     private Date date;
+    @Column(nullable = false)
     private Date publish;
 
     public Integer getId() {
@@ -36,12 +36,12 @@ public class MovieEntity implements MovieAble {
         this.id = id;
     }
 
-    public Integer getId_db() {
-        return id_db;
+    public Integer getTmdb() {
+        return tmdb;
     }
 
-    public void setId_db(Integer id_db) {
-        this.id_db = id_db;
+    public void setTmdb(Integer tmdb) {
+        this.tmdb = tmdb;
     }
 
     @Override

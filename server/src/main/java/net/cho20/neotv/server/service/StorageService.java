@@ -2,7 +2,7 @@ package net.cho20.neotv.server.service;
 
 import java.util.Date;
 
-import net.cho20.neotv.core.bean.MovieAble;
+import net.cho20.neotv.core.bean.Movie;
 import net.cho20.neotv.core.service.Storage;
 import net.cho20.neotv.server.persistence.JpaStorage;
 import org.springframework.stereotype.Component;
@@ -17,22 +17,22 @@ public class StorageService implements Storage {
     }
 
     @Override
-    public MovieAble find(String title) {
+    public Movie find(String title) {
         return storage.find(title);
     }
 
     @Override
-    public Iterable<MovieAble> findAfter(Date date) {
+    public Iterable<Movie> findAfter(Date date) {
         return storage.findAfter(date);
     }
 
     @Override
-    public void insert(MovieAble movie) {
+    public void insert(Movie movie) {
         storage.insert(movie);
     }
 
     @Override
-    public void update(MovieAble movie) {
+    public void update(Movie movie) {
         storage.update(movie);
     }
 }

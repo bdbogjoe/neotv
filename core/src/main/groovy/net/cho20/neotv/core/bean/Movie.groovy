@@ -1,6 +1,6 @@
 package net.cho20.neotv.core.bean
 
-interface MovieAble {
+interface Movie {
 
     String getTitle();
     String getOverview();

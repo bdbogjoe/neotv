@@ -1,8 +1,8 @@
 package net.cho20.neotv.core.bean
 
-class MovieBean extends StreamBean implements MovieAble{
+class MovieBean extends StreamBean implements MovieVod{
 
-    Integer id_db
+    Integer tmdb
     String overview
     Date date
     Date publish

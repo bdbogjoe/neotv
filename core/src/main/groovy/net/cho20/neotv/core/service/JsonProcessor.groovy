@@ -53,7 +53,7 @@ class JsonProcessor implements Processor , MovieConverter{
                     video.url=ch.ch
                     video.image=ch.logo
                     video.overview=ch.desc
-                    video.date=new SimpleDateFormat('YYYY-MM-dd').parse(ch.date)
+                    video.date=new SimpleDateFormat('yyyy-MM-dd').parse(ch.date)
                     if (storage && insert) {
                         storage.insert(video)
                     }

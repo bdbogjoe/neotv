@@ -53,13 +53,12 @@ class MovieLoader implements Runnable {
                         return out
                     }
                     def result = results.get(0)
-                    movie.id_db = result.id
+                    movie.tmdb = result.id
                     movie.overview = result.overview
                     if (result.release_date && !result.release_date.startsWith("00")) {
                         movie.date = new SimpleDateFormat("yyyy-MM-dd").parse(result.release_date)
                     }
                     movie.image = result.poster_path
-                    storage.update(movie)
                 }
             }
 
@@ -74,8 +73,9 @@ class MovieLoader implements Runnable {
                 run()
             }
         }
-        if (movie.url && storage) {
+        if (storage) {
             storage.insert(movie)
         }
+        LOG.info("Processed {}", movie.title)
     }
 }
