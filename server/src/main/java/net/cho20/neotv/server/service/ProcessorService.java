@@ -6,10 +6,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import net.cho20.neotv.core.bean.Group;
-import net.cho20.neotv.core.bean.MovieBean;
-import net.cho20.neotv.core.bean.StreamBean;
-import net.cho20.neotv.core.bean.Type;
+import net.cho20.neotv.core.bean.*;
 import net.cho20.neotv.core.service.JsonProcessor;
 import net.cho20.neotv.core.service.M3uProcessor;
 import net.cho20.neotv.core.service.Processor;
@@ -26,7 +23,10 @@ public class ProcessorService {
 
     public ProcessorService(StorageService storage, String code, String api, String groups) {
         this.processors.add(new M3uProcessor(storage,false, code, api, groups.split(";")));
-        this.processors.add(new JsonProcessor(storage, 309, "Cartoon FR", Type.CARTOON));
+        this.processors.add(new JsonProcessor(storage,  "VOD", Language.FR, Type.MOVIE, 126));
+        this.processors.add(new JsonProcessor(storage, "VOD", Language.EN, Type.MOVIE, 343));
+        this.processors.add(new JsonProcessor(storage,  "Cartoons", Language.FR, Type.CARTOON, 309, 342));
+        this.processors.add(new JsonProcessor(storage, "Cartoons", Language.EN, Type.CARTOON, 131));
     }
 
 
@@ -57,6 +57,7 @@ public class ProcessorService {
                         new Group<>(
                                 group.getName(),
                                 group.getType(),
+                                group.getLanguage(),
                                 StreamSupport.stream(group.getStreams().spliterator(), false)
                                         .map(stream -> clone(code, stream))
                                         .collect(Collectors.toList())

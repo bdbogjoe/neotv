@@ -4,6 +4,7 @@ import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
 import net.cho20.neotv.core.bean.Group
+import net.cho20.neotv.core.bean.Language
 import net.cho20.neotv.core.bean.MovieBean
 import net.cho20.neotv.core.bean.StreamBean
 import net.cho20.neotv.core.bean.Type
@@ -64,12 +65,17 @@ class M3uProcessor implements Processor, MovieConverter {
                                     }
                                     if(!currentGroup) {
                                         currentGroup = new Group(name: g)
-                                        if (g.contains('VOD')) {
+                                        if (g.toLowerCase().contains('vod')) {
                                             currentGroup.type = Type.MOVIE
                                         }else if(g.toLowerCase().contains("box")){
                                             currentGroup.type = Type.BOX_OFFICE
                                         } else {
                                             currentGroup.type = Type.TV
+                                        }
+                                        if(g.toLowerCase().contains("english")){
+                                            currentGroup.language= Language.EN
+                                        }else{
+                                            currentGroup.language=Language.FR
                                         }
                                         foundGroup << currentGroup
                                     }

@@ -22,7 +22,7 @@ public class MovieEntity implements MovieVod {
     private String title;
 
     private String image;
-    @Column(length = 2048)
+    @Column(length = 4096)
     private String overview;
     private Date date;
     @Column(nullable = false)
