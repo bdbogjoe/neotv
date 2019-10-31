@@ -8,6 +8,7 @@ import java.util.stream.StreamSupport;
 
 import net.cho20.neotv.core.bean.*;
 import net.cho20.neotv.core.service.JsonProcessor;
+import net.cho20.neotv.core.service.M3uGroup;
 import net.cho20.neotv.core.service.M3uProcessor;
 import net.cho20.neotv.core.service.Processor;
 import org.slf4j.Logger;
@@ -22,7 +23,10 @@ public class ProcessorService {
     private Iterable<Group<StreamBean>> groups = Collections.emptyList();
 
     public ProcessorService(StorageService storage, String code, String api, String groups) {
-        this.processors.add(new M3uProcessor(storage,false, code, api, groups.split(";")));
+        this.processors.add(new M3uProcessor(storage,false, code, api, Arrays.stream(groups.split(";")).map(s -> {
+            String[] tab = s.split(":");
+            return new M3uGroup(tab[0], tab.length>1? Arrays.stream(tab).skip(1).collect(Collectors.toList()):null);
+        }).collect(Collectors.toList())));
         this.processors.add(new JsonProcessor(storage,  "VOD", Language.FR, Type.MOVIE, 126));
         this.processors.add(new JsonProcessor(storage, "VOD", Language.EN, Type.MOVIE, 343));
         this.processors.add(new JsonProcessor(storage,  "Cartoons", Language.FR, Type.CARTOON, 309, 342));

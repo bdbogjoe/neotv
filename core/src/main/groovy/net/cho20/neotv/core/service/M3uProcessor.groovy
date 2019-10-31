@@ -29,15 +29,15 @@ class M3uProcessor implements Processor, MovieConverter {
     private Pattern p = Pattern.compile('(?:group-title="([^"]*)")?\\s*tvg-logo="([^"]*)",(.*)$')
 
     private final String url
-    private final Set<String> groups
+    private final Map<String,M3uGroup> groups
     private final String code
     private final String api
     private final Storage storage
     private final boolean wait
 
-    M3uProcessor(Storage storage, boolean wait, String code, String api, def groups) {
+    M3uProcessor(Storage storage, boolean wait, String code, String api, Collection<M3uGroup> groups) {
         this.url = 'http://neotv.siptv-list.com/siptv.m3u?code=' + code
-        this.groups = groups.collect() as Set
+        this.groups = groups.collectEntries({[(it.name):it]})
         this.code = code
         this.api = api
         this.wait = wait
@@ -57,7 +57,8 @@ class M3uProcessor implements Processor, MovieConverter {
                     if (m.find()) {
                         def g = m.group(1)
                         if (g) {
-                            if (!groups || groups.contains(g) ) {
+                            M3uGroup gr = groups.get(g)
+                            if (!groups ||  gr!=null) {
                                 if(currentGroup?.name!=g) {
                                     LOG.info("Found group : {}", g)
                                     currentGroup = foundGroup.find {
@@ -94,19 +95,21 @@ class M3uProcessor implements Processor, MovieConverter {
                                 }
                             }
                             def title = m.group(3)
-                            if (currentGroup.type == Type.MOVIE) {
-                                def video = storage?.find(title)
-                                if (video) {
-                                    video = convert(video)
-                                } else {
-                                    video = new MovieBean(title: title, publish: now)
-                                    if (storage) {
-                                        executor.submit(new MovieLoader(storage, api, video))
+                            if(groups==null || groups.get(currentGroup.name).match(title)) {
+                                if (currentGroup.type == Type.MOVIE) {
+                                    def video = storage?.find(title)
+                                    if (video) {
+                                        video = convert(video)
+                                    } else {
+                                        video = new MovieBean(title: title, publish: now)
+                                        if (storage) {
+                                            executor.submit(new MovieLoader(storage, api, video))
+                                        }
                                     }
+                                    currentGroup.streams << video
+                                } else {
+                                    currentGroup.streams << new StreamBean(title: title, image: logo)
                                 }
-                                currentGroup.streams << video
-                            } else {
-                                currentGroup.streams << new StreamBean(title: title, image: logo)
                             }
                         }
                     } else if (currentGroup && currentGroup.streams && line.startsWith("http")) {
