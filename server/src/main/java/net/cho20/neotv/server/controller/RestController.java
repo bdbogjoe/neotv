@@ -36,6 +36,8 @@ public class RestController {
     }
 
 
+
+
     @GetMapping("/all")
     public Iterable<net.cho20.neotv.core.bean.Group> groups(@RequestParam(value = "code") String code) {
         return processorService.getGroups(code)
@@ -55,13 +57,14 @@ public class RestController {
                                                             @RequestParam(value = "type", required = false) String type,
                                                             @RequestParam(value = "language", required = false) String language,
                                                             @RequestParam(value = "name") String name) {
-        return filter(code, type != null ? Type.valueOf(type) : null, language != null ? Language.valueOf(language) : null, name);
+        return filter(code, type != null ? Type.valueOf(type) : null, language , name);
     }
 
-    private Iterable<net.cho20.neotv.core.bean.Group> filter(String code, Type type, Language language, String... name) {
+    private Iterable<net.cho20.neotv.core.bean.Group> filter(String code, Type type, String language, String... name) {
+        Language l = language!=null && !language.equals("undefined")?Language.valueOf(language.toUpperCase()):Language.FR;
         return processorService.getGroups(code)
                 .filter(group -> type == null || group.getType() == type)
-                .filter(group -> language == null || group.getLanguage() == language)
+                .filter(group -> language == null || group.getLanguage() == l)
                 .map(mapGroup -> new Group<Map<String, String>>(
                         mapGroup.getName(),
                         mapGroup.getType(),
@@ -87,7 +90,7 @@ public class RestController {
             @RequestParam(value = "code") String code,
             @RequestParam(value = "language", required = false) String language
     ) {
-        return filter(code, Type.MOVIE, language != null ? Language.valueOf(language) : null);
+        return filter(code, Type.MOVIE, language);
     }
 
 
@@ -96,14 +99,14 @@ public class RestController {
             @RequestParam(value = "code") String code,
             @RequestParam(value = "language", required = false) String language
     ) {
-        return filter(code, Type.CARTOON, language != null ? Language.valueOf(language) : null);
+        return filter(code, Type.CARTOON, language );
     }
 
     @GetMapping("/tv")
     public Iterable<net.cho20.neotv.core.bean.Group> tv(@RequestParam(value = "code") String code,
                                                         @RequestParam(value = "language", required = false) String language
     ) {
-        return filter(code, Type.TV, language != null ? Language.valueOf(language) : null);
+        return filter(code, Type.TV, language);
     }
 
     @GetMapping("/sport")
