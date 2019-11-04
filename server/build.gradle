@@ -27,3 +27,9 @@ bootJar {
     launchScript()
 }
 
+bootRun {
+    if (project.properties.get("app.code")) {
+        systemProperty "app.code", project.properties.get("app.code")
+    }
+}
+
