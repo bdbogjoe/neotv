@@ -1,7 +1,7 @@
 # neotv
 
 
-- to build : ./gradlew jar
+- to build : ./gradlew build
 - to run using script: 
 ```
 java -jar script/build/libs/neotv.jar /
@@ -17,5 +17,8 @@ java -jar script/build/libs/neotv.jar /
 - to run full app
 ```
 java -Dapp.code=<neotv code> -jar server/build/libs/neotv-server-1.0.0.jar
-
+```
+or without building
+```
+./gradlew bootRun -Papp.code=<neotv code>
 ```
