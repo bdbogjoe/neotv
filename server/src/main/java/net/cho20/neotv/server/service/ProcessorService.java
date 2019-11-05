@@ -2,6 +2,9 @@ package net.cho20.neotv.server.service;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -23,33 +26,39 @@ public class ProcessorService {
     private Iterable<Group<StreamBean>> groups = Collections.emptyList();
 
     public ProcessorService(StorageService storage, String code, String api, String groups) {
-        this.processors.add(new M3uProcessor(storage,false, code, api, Arrays.stream(groups.split(";")).map(s -> {
+        this.processors.add(new M3uProcessor(storage, code, api, Arrays.stream(groups.split(";")).map(s -> {
             String[] tab = s.split(":");
-            return new M3uGroup(tab[0], tab.length>1? Arrays.stream(tab).skip(1).collect(Collectors.toList()):null);
+            return new M3uGroup(tab[0], tab.length > 1 ? Arrays.stream(tab).skip(1).collect(Collectors.toList()) : null);
         }).collect(Collectors.toList())));
-        this.processors.add(new JsonProcessor(storage,  "VOD", Language.FR, Type.MOVIE, 126));
-        this.processors.add(new JsonProcessor(storage, "VOD", Language.EN, Type.MOVIE, 343));
-        this.processors.add(new JsonProcessor(storage,  "Cartoons", Language.FR, Type.CARTOON, 309, 342));
-        this.processors.add(new JsonProcessor(storage, "Cartoons", Language.EN, Type.CARTOON, 131));
+        this.processors.add(new JsonProcessor(storage, api, "VOD", Language.FR, Type.MOVIE, 126));
+        this.processors.add(new JsonProcessor(storage, api, "VOD", Language.EN, Type.MOVIE, 343));
+        this.processors.add(new JsonProcessor(storage, api, "Cartoons", Language.FR, Type.CARTOON, 309, 342));
+        this.processors.add(new JsonProcessor(storage, api, "Cartoons", Language.EN, Type.CARTOON, 131));
     }
 
 
     @Scheduled(fixedDelay = 1 * 3600 * 1000)
     public void process() {
         try {
+            ExecutorService executorService = Executors.newFixedThreadPool(3);
             groups = processors
                     .stream()
                     .map((Function<Processor, Iterable<Group<StreamBean>>>) processor -> {
                         try {
-                            return processor.process();
-                        }catch(Exception e){
+                            return processor.process(executorService);
+                        } catch (Exception e) {
                             LOG.warn("Error while loading group", e);
                             return Collections.emptyList();
                         }
                     })
                     .flatMap((Function<Iterable<Group<StreamBean>>, java.util.stream.Stream<Group<StreamBean>>>) gr -> StreamSupport.stream(gr.spliterator(), false))
                     .collect(Collectors.toList());
-        }catch(Exception e){
+            executorService.shutdown();
+            while (!executorService.isTerminated()) {
+                LOG.info("Waiting..., remaining tasks : {}", ((ThreadPoolExecutor)executorService).getQueue().size());
+                Thread.sleep(1000);
+            }
+        } catch (Exception e) {
             LOG.error("Error while processing groups", e);
         }
     }
@@ -70,29 +79,27 @@ public class ProcessorService {
     }
 
 
-
-
-    private Map<String, String> clone(String code, StreamBean stream){
+    private Map<String, String> clone(String code, StreamBean stream) {
         Map<String, String> out = new LinkedHashMap<>();
         out.put("title", stream.getTitle());
         out.put("url", stream.buildUrl(code));
         String image = stream.getImage();
-        if(stream instanceof MovieBean){
-            if(((MovieBean) stream).getTmdb()!=null){
-               image = "https://image.tmdb.org/t/p/w400"+ stream.getImage();
+        if (stream instanceof MovieBean) {
+            if (((MovieBean) stream).getTmdb() != null) {
+                image = "https://image.tmdb.org/t/p/w400" + stream.getImage();
             }
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            if(((MovieBean) stream).getOverview()!=null) {
+            if (((MovieBean) stream).getOverview() != null) {
                 out.put("overview", ((MovieBean) stream).getOverview());
             }
-            if(((MovieBean) stream).getDate()!=null) {
+            if (((MovieBean) stream).getDate() != null) {
                 out.put("date", sdf.format(((MovieBean) stream).getDate()));
             }
-            if(((MovieBean) stream).getPublish()!=null) {
+            if (((MovieBean) stream).getPublish() != null) {
                 out.put("publish", sdf.format(((MovieBean) stream).getPublish()));
             }
         }
-        if(image!=null) {
+        if (image != null) {
             out.put("image", image);
         }
 

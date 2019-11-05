@@ -3,48 +3,38 @@ package net.cho20.neotv.core.service
 import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
-import net.cho20.neotv.core.bean.Group
-import net.cho20.neotv.core.bean.Language
-import net.cho20.neotv.core.bean.MovieBean
-import net.cho20.neotv.core.bean.StreamBean
-import net.cho20.neotv.core.bean.Type
+import net.cho20.neotv.core.bean.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.regex.Pattern
 
 class M3uProcessor implements Processor, MovieConverter {
-
 
 
     private static final Logger LOG = LoggerFactory.getLogger(M3uProcessor.class)
 
     private final static Pattern CODE = Pattern.compile('(code=)(?:\\d+)')
 
-    private ExecutorService executor = Executors.newFixedThreadPool(3)
-
 
     private Pattern p = Pattern.compile('(?:group-title="([^"]*)")?\\s*tvg-logo="([^"]*)",(.*)$')
 
     private final String url
-    private final Map<String,M3uGroup> groups
+    private final Map<String, M3uGroup> groups
     private final String code
     private final String api
     private final Storage storage
-    private final boolean wait
 
-    M3uProcessor(Storage storage, boolean wait, String code, String api, Collection<M3uGroup> groups) {
+    M3uProcessor(Storage storage, String code, String api, Collection<M3uGroup> groups) {
         this.url = 'http://neotv.siptv-list.com/siptv.m3u?code=' + code
-        this.groups = groups.collectEntries({[(it.name):it]})
+        this.groups = groups.collectEntries({ [(it.name): it] })
         this.code = code
         this.api = api
-        this.wait = wait
         this.storage = storage
     }
 
-    Iterable<Group> process() {
+    Iterable<Group> process(ExecutorService executorService) {
         LOG.info("Processing : {}", url)
         def now = new Date()
         def foundGroup = [] as LinkedList
@@ -58,25 +48,25 @@ class M3uProcessor implements Processor, MovieConverter {
                         def g = m.group(1)
                         if (g) {
                             M3uGroup gr = groups.get(g)
-                            if (!groups ||  gr!=null) {
-                                if(currentGroup?.name!=g) {
+                            if (!groups || gr != null) {
+                                if (currentGroup?.name != g) {
                                     LOG.info("Found group : {}", g)
                                     currentGroup = foundGroup.find {
-                                        it.name==g
+                                        it.name == g
                                     }
-                                    if(!currentGroup) {
+                                    if (!currentGroup) {
                                         currentGroup = new Group(name: g)
                                         if (g.toLowerCase().contains('vod')) {
                                             currentGroup.type = Type.MOVIE
-                                        }else if(g.toLowerCase().contains("box")){
+                                        } else if (g.toLowerCase().contains("box")) {
                                             currentGroup.type = Type.BOX_OFFICE
                                         } else {
                                             currentGroup.type = Type.TV
                                         }
-                                        if(g.toLowerCase().contains("english")){
-                                            currentGroup.language= Language.EN
-                                        }else{
-                                            currentGroup.language=Language.FR
+                                        if (g.toLowerCase().contains("english")) {
+                                            currentGroup.language = Language.EN
+                                        } else {
+                                            currentGroup.language = Language.FR
                                         }
                                         foundGroup << currentGroup
                                     }
@@ -87,7 +77,7 @@ class M3uProcessor implements Processor, MovieConverter {
                         }
                         if (currentGroup) {
                             def logo = m.group(2)
-                            if(logo) {
+                            if (logo) {
                                 try {
                                     new URL(logo).openStream()
                                 } catch (IOException ioe) {
@@ -95,7 +85,7 @@ class M3uProcessor implements Processor, MovieConverter {
                                 }
                             }
                             def title = m.group(3)
-                            if(groups==null || groups.get(currentGroup.name).match(title)) {
+                            if (groups == null || groups.get(currentGroup.name).match(title)) {
                                 if (currentGroup.type == Type.MOVIE) {
                                     def video = storage?.find(title)
                                     if (video) {
@@ -103,7 +93,15 @@ class M3uProcessor implements Processor, MovieConverter {
                                     } else {
                                         video = new MovieBean(title: title, publish: now)
                                         if (storage) {
-                                            executor.submit(new MovieLoader(storage, api, video))
+                                            executorService.submit(new MovieLoader(api, video.title) {
+                                                @Override
+                                                void onComplete(Movie movie) {
+                                                    ['tmdb', 'image', 'overview', 'date'].each {
+                                                        video[it] = found[it]
+                                                    }
+                                                    storage.insert(video)
+                                                }
+                                            })
                                         }
                                     }
                                     currentGroup.streams << video
@@ -126,13 +124,6 @@ class M3uProcessor implements Processor, MovieConverter {
                     }
 
                 }
-            }
-        }
-        executor.shutdown()
-        if (wait) {
-            while (!executor.isTerminated()) {
-                LOG.debug("Waiting..., remaining tasks : " + executor.queue.size())
-                Thread.currentThread().sleep(1000)
             }
         }
         LOG.info("Processed : {}", url)

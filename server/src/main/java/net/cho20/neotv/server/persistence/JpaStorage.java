@@ -1,5 +1,6 @@
 package net.cho20.neotv.server.persistence;
 
+import javax.transaction.Transactional;
 import java.beans.PropertyDescriptor;
 import java.util.Date;
 import java.util.function.Function;
@@ -9,6 +10,7 @@ import net.cho20.neotv.core.bean.Movie;
 import net.cho20.neotv.core.bean.MovieVod;
 import net.cho20.neotv.core.service.Storage;
 import org.springframework.beans.BeanUtils;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,26 +33,38 @@ public class JpaStorage implements Storage {
     }
 
     @Override
+    @Transactional
     public void insert(Movie movie) {
-        save(movie);
+        save(movie, true);
     }
 
     @Override
+    @Transactional
     public void update(Movie movie) {
-        save(movie);
+        save(movie, true);
     }
 
-    private void save(Movie movie) {
+    private void save(Movie movie, boolean retry) {
+        MovieEntity toSave = convert(movie);
+        MovieEntity existing = movieRepository.findByTitle(movie.getTitle());
+        if(existing!=null) {
+            toSave.setPublish(existing.getPublish());
+        }
         if (movie instanceof MovieVod && ((MovieVod) movie).getTmdb() != null) {
             MovieEntity found = movieRepository.findByTmdb(((MovieVod) movie).getTmdb());
             if (found!=null) {
                 fill(movie, found);
-                movieRepository.saveAndFlush(found);
-            }else{
-                movieRepository.saveAndFlush(convert(movie));
+                toSave=found;
             }
-        }else {
-            movieRepository.saveAndFlush(convert(movie));
+        }
+        try {
+            movieRepository.saveAndFlush(toSave);
+        }catch(DataIntegrityViolationException e){
+            if(retry) {
+                save(movie, false);
+            }else{
+                throw e;
+            }
         }
     }
 

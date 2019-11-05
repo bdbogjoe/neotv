@@ -7,6 +7,8 @@ import net.cho20.neotv.core.service.DbStorage
 import net.cho20.neotv.core.service.M3uProcessor
 
 import java.text.SimpleDateFormat
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class Main {
 
@@ -23,7 +25,14 @@ class Main {
 
         if(options){
             try {
-                def processor = new M3uProcessor(new DbStorage(), true, options.code, options.api, options.groups ?: null)
+                ExecutorService executorService = Executors.newFixedThreadPool(3)
+                def processor = new M3uProcessor(executorService, new DbStorage(), true, options.code, options.api, options.groups ?: null)
+                executorService.shutdown()
+                while (!executorService.isTerminated()) {
+                    println("Waiting..., remaining tasks : " + executorService.queue.size())
+                    Thread.currentThread().sleep(1000)
+                }
+
                 def groups = processor.process().sort()
                 if (options.output) {
                        def file = new File(options.output)
