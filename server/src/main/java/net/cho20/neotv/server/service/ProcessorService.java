@@ -43,7 +43,7 @@ public class ProcessorService {
             LOG.info("Start loading goups");
             ExecutorService executorService = Executors.newFixedThreadPool(3);
             groups = processors
-                    .parallelStream()
+                    .stream()
                     .map((Function<Processor, Iterable<Group<StreamBean>>>) processor -> {
                         try {
                             return processor.process(executorService);
