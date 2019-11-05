@@ -40,9 +40,10 @@ public class ProcessorService {
     @Scheduled(fixedDelay = 1 * 3600 * 1000)
     public void process() {
         try {
+            LOG.info("Start loading goups");
             ExecutorService executorService = Executors.newFixedThreadPool(3);
             groups = processors
-                    .stream()
+                    .parallelStream()
                     .map((Function<Processor, Iterable<Group<StreamBean>>>) processor -> {
                         try {
                             return processor.process(executorService);
@@ -58,6 +59,7 @@ public class ProcessorService {
                 LOG.info("Waiting..., remaining tasks : {}", ((ThreadPoolExecutor)executorService).getQueue().size());
                 Thread.sleep(1000);
             }
+            LOG.info("Groups loaded");
         } catch (Exception e) {
             LOG.error("Error while processing groups", e);
         }
