@@ -1,5 +1,7 @@
 package net.cho20.neotv.server.controller;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -37,8 +39,9 @@ public class RestController {
         processorService.process();
     }
 
-    private String getCode(HttpServletRequest request, String code) {
-        if (code == null && request.getLocalAddr().startsWith("192.168.1")) {
+    private String getCode(HttpServletRequest request, String code) throws UnknownHostException {
+        InetAddress address = InetAddress.getByName(request.getRemoteAddr());
+        if (code == null && (address.isLoopbackAddress() || address.isSiteLocalAddress())) {
             return internalCode;
         } else {
             return code;
@@ -46,7 +49,7 @@ public class RestController {
     }
 
     @GetMapping("/all")
-    public Iterable<net.cho20.neotv.core.bean.Group<?>> groups(HttpServletRequest request, @RequestParam(value = "code", required = false) String code) {
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> groups(HttpServletRequest request, @RequestParam(value = "code", required = false) String code) throws UnknownHostException {
         return processorService.getGroups(getCode(request, code))
             .map(mapGroup -> new Group<Map<String, String>>(
                 mapGroup.getName(),
@@ -63,7 +66,7 @@ public class RestController {
     public Iterable<net.cho20.neotv.core.bean.Group<?>> groups(HttpServletRequest request,@RequestParam(value = "code", required = false) String code,
                                                                @RequestParam(value = "type", required = false) String type,
                                                                @RequestParam(value = "language", required = false) String language,
-                                                               @RequestParam(value = "name") String name) {
+                                                               @RequestParam(value = "name") String name) throws UnknownHostException {
         return filter(getCode(request, code), type != null ? Type.valueOf(type) : null, language, name);
     }
 
@@ -96,7 +99,7 @@ public class RestController {
     public Iterable<net.cho20.neotv.core.bean.Group<?>> movies(HttpServletRequest request,
         @RequestParam(value = "code") String code,
         @RequestParam(value = "language", required = false) String language
-    ) {
+    ) throws UnknownHostException {
         return filter(getCode(request, code), Type.MOVIE, language);
     }
 
@@ -104,19 +107,19 @@ public class RestController {
     public Iterable<net.cho20.neotv.core.bean.Group<?>> cartoons(HttpServletRequest request,
         @RequestParam(value = "code") String code,
         @RequestParam(value = "language", required = false) String language
-    ) {
+    ) throws UnknownHostException {
         return filter(getCode(request, code), Type.CARTOON, language);
     }
 
     @GetMapping("/tv")
     public Iterable<net.cho20.neotv.core.bean.Group<?>> tv(HttpServletRequest request,@RequestParam(value = "code", required = false) String code,
                                                            @RequestParam(value = "language", required = false) String language
-    ) {
+    ) throws UnknownHostException {
         return filter(getCode(request, code), Type.TV, language);
     }
 
     @GetMapping("/sport")
-    public Iterable<net.cho20.neotv.core.bean.Group<?>> sport(HttpServletRequest request,@RequestParam(value = "code", required = false) String code) {
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> sport(HttpServletRequest request,@RequestParam(value = "code", required = false) String code) throws UnknownHostException {
         return filter(getCode(request, code), Type.TV, null, ".*[sS]port.*", "^Canal\\+$");
     }
 
