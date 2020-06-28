@@ -44,7 +44,7 @@ public class RestController {
         if (code == null && (address.isLoopbackAddress() || address.isSiteLocalAddress())) {
             return internalCode;
         } else {
-            if(code==null){
+            if (code == null) {
                 throw new IllegalArgumentException("Code is mandatory");
             }
             return code;
@@ -66,7 +66,7 @@ public class RestController {
     }
 
     @GetMapping("/search")
-    public Iterable<net.cho20.neotv.core.bean.Group<?>> groups(HttpServletRequest request,@RequestParam(value = "code", required = false) String code,
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> groups(HttpServletRequest request, @RequestParam(value = "code", required = false) String code,
                                                                @RequestParam(value = "type", required = false) String type,
                                                                @RequestParam(value = "language", required = false) String language,
                                                                @RequestParam(value = "name") String name) throws UnknownHostException {
@@ -74,7 +74,7 @@ public class RestController {
     }
 
     private Iterable<net.cho20.neotv.core.bean.Group<?>> filter(String code, Type type, String language, String... name) {
-        Language l = language != null && !language.equals("undefined") ? Language.valueOf(language.toUpperCase()) : Language.FR;
+        Language l = language != null && !language.isEmpty()  && !language.equals("undefined") ? Language.valueOf(language.toUpperCase()) : Language.FR;
         return processorService.getGroups(code)
             .filter(group -> type == null || group.getType() == type)
             .filter(group -> language == null || group.getLanguage() == l)
@@ -100,29 +100,29 @@ public class RestController {
 
     @GetMapping("/movies")
     public Iterable<net.cho20.neotv.core.bean.Group<?>> movies(HttpServletRequest request,
-        @RequestParam(value = "code") String code,
-        @RequestParam(value = "language", required = false) String language
+                                                               @RequestParam(value = "code", required = false) String code,
+                                                               @RequestParam(value = "language", required = false) String language
     ) throws UnknownHostException {
         return filter(getCode(request, code), Type.MOVIE, language);
     }
 
     @GetMapping("/cartoons")
     public Iterable<net.cho20.neotv.core.bean.Group<?>> cartoons(HttpServletRequest request,
-        @RequestParam(value = "code", required = false) String code,
-        @RequestParam(value = "language", required = false) String language
+                                                                 @RequestParam(value = "code", required = false) String code,
+                                                                 @RequestParam(value = "language", required = false) String language
     ) throws UnknownHostException {
         return filter(getCode(request, code), Type.CARTOON, language);
     }
 
     @GetMapping("/tv")
-    public Iterable<net.cho20.neotv.core.bean.Group<?>> tv(HttpServletRequest request,@RequestParam(value = "code", required = false) String code,
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> tv(HttpServletRequest request, @RequestParam(value = "code", required = false) String code,
                                                            @RequestParam(value = "language", required = false) String language
     ) throws UnknownHostException {
         return filter(getCode(request, code), Type.TV, language);
     }
 
     @GetMapping("/sport")
-    public Iterable<net.cho20.neotv.core.bean.Group<?>> sport(HttpServletRequest request,@RequestParam(value = "code", required = false) String code) throws UnknownHostException {
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> sport(HttpServletRequest request, @RequestParam(value = "code", required = false) String code) throws UnknownHostException {
         return filter(getCode(request, code), Type.TV, null, ".*[sS]port.*", "^Canal\\+$");
     }
 
