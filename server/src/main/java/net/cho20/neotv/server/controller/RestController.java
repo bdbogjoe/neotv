@@ -1,6 +1,5 @@
 package net.cho20.neotv.server.controller;
 
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -8,6 +7,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.servlet.http.HttpServletRequest;
 
 import net.cho20.neotv.core.bean.Group;
 import net.cho20.neotv.core.bean.Language;
@@ -23,96 +23,101 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class RestController {
 
     private final ProcessorService processorService;
+    @Value("${app.code}")
+    private String internalCode;
     private String[] sorts = {"publish", "date", "title"};
-    private Collection<String> revers = Arrays.stream(new String[]{"publish", "date"}).collect(Collectors.toSet());
+    private Collection<String> revers = Arrays.stream(new String[] {"publish", "date"}).collect(Collectors.toSet());
 
     public RestController(ProcessorService processorService) {
         this.processorService = processorService;
     }
-
 
     @GetMapping("/refresh")
     public void refresh() {
         processorService.process();
     }
 
-
-
+    private String getCode(HttpServletRequest request, String code) {
+        if (code == null && request.getLocalAddr().startsWith("192.168.1")) {
+            return internalCode;
+        } else {
+            return code;
+        }
+    }
 
     @GetMapping("/all")
-    public Iterable<net.cho20.neotv.core.bean.Group<?>> groups(@RequestParam(value = "code", required = false) String code) {
-        return processorService.getGroups(code)
-                .map(mapGroup -> new Group<Map<String, String>>(
-                        mapGroup.getName(),
-                        mapGroup.getType(),
-                        mapGroup.getLanguage(),
-                        StreamSupport.stream(mapGroup.getStreams().spliterator(), false)
-                                .sorted(new MapComparator(sorts, revers))
-                                .collect(Collectors.toList())
-                ))
-                .collect(Collectors.toList());
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> groups(HttpServletRequest request, @RequestParam(value = "code", required = false) String code) {
+        return processorService.getGroups(getCode(request, code))
+            .map(mapGroup -> new Group<Map<String, String>>(
+                mapGroup.getName(),
+                mapGroup.getType(),
+                mapGroup.getLanguage(),
+                StreamSupport.stream(mapGroup.getStreams().spliterator(), false)
+                    .sorted(new MapComparator(sorts, revers))
+                    .collect(Collectors.toList())
+            ))
+            .collect(Collectors.toList());
     }
 
     @GetMapping("/search")
-    public Iterable<net.cho20.neotv.core.bean.Group<?>> groups(@RequestParam(value = "code", required = false) String code,
-                                                            @RequestParam(value = "type", required = false) String type,
-                                                            @RequestParam(value = "language", required = false) String language,
-                                                            @RequestParam(value = "name") String name) {
-        return filter(code, type != null ? Type.valueOf(type) : null, language , name);
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> groups(HttpServletRequest request,@RequestParam(value = "code", required = false) String code,
+                                                               @RequestParam(value = "type", required = false) String type,
+                                                               @RequestParam(value = "language", required = false) String language,
+                                                               @RequestParam(value = "name") String name) {
+        return filter(getCode(request, code), type != null ? Type.valueOf(type) : null, language, name);
     }
 
     private Iterable<net.cho20.neotv.core.bean.Group<?>> filter(String code, Type type, String language, String... name) {
-        Language l = language!=null && !language.equals("undefined")?Language.valueOf(language.toUpperCase()):Language.FR;
+        Language l = language != null && !language.equals("undefined") ? Language.valueOf(language.toUpperCase()) : Language.FR;
         return processorService.getGroups(code)
-                .filter(group -> type == null || group.getType() == type)
-                .filter(group -> language == null || group.getLanguage() == l)
-                .map(mapGroup -> new Group<Map<String, String>>(
-                        mapGroup.getName(),
-                        mapGroup.getType(),
-                        mapGroup.getLanguage(),
-                        StreamSupport.stream(mapGroup.getStreams().spliterator(), false)
-                                .filter(stringStringMap ->
-                                        name == null || name.length == 0 ||
-                                                Arrays.stream(name).map(Pattern::compile).anyMatch(s -> {
-                                                            String title = stringStringMap.get("title");
-                                                            return s.matcher(title).find();
-                                                        }
-                                                )
-                                )
-                                .sorted(new MapComparator(sorts, revers))
-                                .collect(Collectors.toList())
-                ))
-                .filter(group -> group.getStreams().iterator().hasNext())
-                .collect(Collectors.toList());
+            .filter(group -> type == null || group.getType() == type)
+            .filter(group -> language == null || group.getLanguage() == l)
+            .map(mapGroup -> new Group<Map<String, String>>(
+                mapGroup.getName(),
+                mapGroup.getType(),
+                mapGroup.getLanguage(),
+                StreamSupport.stream(mapGroup.getStreams().spliterator(), false)
+                    .filter(stringStringMap ->
+                        name == null || name.length == 0 ||
+                            Arrays.stream(name).map(Pattern::compile).anyMatch(s -> {
+                                    String title = stringStringMap.get("title");
+                                    return s.matcher(title).find();
+                                }
+                            )
+                    )
+                    .sorted(new MapComparator(sorts, revers))
+                    .collect(Collectors.toList())
+            ))
+            .filter(group -> group.getStreams().iterator().hasNext())
+            .collect(Collectors.toList());
     }
 
     @GetMapping("/movies")
-    public Iterable<net.cho20.neotv.core.bean.Group<?>> movies(
-            @RequestParam(value = "code") String code,
-            @RequestParam(value = "language", required = false) String language
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> movies(HttpServletRequest request,
+        @RequestParam(value = "code") String code,
+        @RequestParam(value = "language", required = false) String language
     ) {
-        return filter(code, Type.MOVIE, language);
+        return filter(getCode(request, code), Type.MOVIE, language);
     }
 
-
     @GetMapping("/cartoons")
-    public Iterable<net.cho20.neotv.core.bean.Group<?>> cartoons(
-            @RequestParam(value = "code") String code,
-            @RequestParam(value = "language", required = false) String language
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> cartoons(HttpServletRequest request,
+        @RequestParam(value = "code") String code,
+        @RequestParam(value = "language", required = false) String language
     ) {
-        return filter(code, Type.CARTOON, language );
+        return filter(getCode(request, code), Type.CARTOON, language);
     }
 
     @GetMapping("/tv")
-    public Iterable<net.cho20.neotv.core.bean.Group<?>> tv(@RequestParam(value = "code", required = false) String code,
-                                                        @RequestParam(value = "language", required = false) String language
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> tv(HttpServletRequest request,@RequestParam(value = "code", required = false) String code,
+                                                           @RequestParam(value = "language", required = false) String language
     ) {
-        return filter(code, Type.TV, language);
+        return filter(getCode(request, code), Type.TV, language);
     }
 
     @GetMapping("/sport")
-    public Iterable<net.cho20.neotv.core.bean.Group<?>> sport(@RequestParam(value = "code", required = false) String code) {
-        return filter(code, Type.TV, null, ".*[sS]port.*", "^Canal\\+$");
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> sport(HttpServletRequest request,@RequestParam(value = "code", required = false) String code) {
+        return filter(getCode(request, code), Type.TV, null, ".*[sS]port.*", "^Canal\\+$");
     }
 
     private static class MapComparator implements Comparator<Map<String, String>> {

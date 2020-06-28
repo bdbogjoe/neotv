@@ -32,9 +32,6 @@ public class ProcessorService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProcessorService.class);
 
-    @Value("${app.code}")
-    private String internalCode;
-
     private Collection<Processor> processors = new ArrayList<>();
     private Iterable<Group<StreamBean>> groups = Collections.emptyList();
 
@@ -77,13 +74,7 @@ public class ProcessorService {
         }
     }
 
-    public java.util.stream.Stream<Group<Map<String, String>>> getGroups(String input) {
-        String code;
-        if (input == null) {
-            code = internalCode;
-        }else{
-            code=input;
-        }
+    public java.util.stream.Stream<Group<Map<String, String>>> getGroups(String code) {
         return StreamSupport.stream(groups.spliterator(), false)
             .map(group ->
                 new Group<>(
