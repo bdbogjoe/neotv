@@ -44,6 +44,9 @@ public class RestController {
         if (code == null && (address.isLoopbackAddress() || address.isSiteLocalAddress())) {
             return internalCode;
         } else {
+            if(code==null){
+                throw new IllegalArgumentException("Code is mandatory");
+            }
             return code;
         }
     }
@@ -105,7 +108,7 @@ public class RestController {
 
     @GetMapping("/cartoons")
     public Iterable<net.cho20.neotv.core.bean.Group<?>> cartoons(HttpServletRequest request,
-        @RequestParam(value = "code") String code,
+        @RequestParam(value = "code", required = false) String code,
         @RequestParam(value = "language", required = false) String language
     ) throws UnknownHostException {
         return filter(getCode(request, code), Type.CARTOON, language);
