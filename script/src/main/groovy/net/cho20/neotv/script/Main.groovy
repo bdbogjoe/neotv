@@ -4,6 +4,7 @@ package net.cho20.neotv.script
 import groovy.json.JsonBuilder
 import groovy.xml.MarkupBuilder
 import net.cho20.neotv.core.service.DbStorage
+import net.cho20.neotv.core.service.M3uGroup
 import net.cho20.neotv.core.service.M3uProcessor
 
 import java.text.SimpleDateFormat
@@ -26,14 +27,12 @@ class Main {
         if(options){
             try {
                 ExecutorService executorService = Executors.newFixedThreadPool(3)
-                def processor = new M3uProcessor(executorService, new DbStorage(), true, options.code, options.api, options.groups ?: null)
-                executorService.shutdown()
-                while (!executorService.isTerminated()) {
-                    println("Waiting..., remaining tasks : " + executorService.queue.size())
-                    Thread.currentThread().sleep(1000)
-                }
+                def processor = new M3uProcessor(new DbStorage(), options.code, options.api, options.groups?.collect{new M3uGroup(it, null)})
 
-                def groups = processor.process().sort()
+
+                def groups = processor.process(executorService).sort()
+                executorService.shutdown()
+
                 if (options.output) {
                        def file = new File(options.output)
                        file.withWriter { writer ->

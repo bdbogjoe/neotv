@@ -13,6 +13,7 @@ import net.cho20.neotv.core.bean.Group;
 import net.cho20.neotv.core.bean.Language;
 import net.cho20.neotv.core.bean.Type;
 import net.cho20.neotv.server.service.ProcessorService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,7 +40,7 @@ public class RestController {
 
 
     @GetMapping("/all")
-    public Iterable<net.cho20.neotv.core.bean.Group> groups(@RequestParam(value = "code") String code) {
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> groups(@RequestParam(value = "code", required = false) String code) {
         return processorService.getGroups(code)
                 .map(mapGroup -> new Group<Map<String, String>>(
                         mapGroup.getName(),
@@ -53,14 +54,14 @@ public class RestController {
     }
 
     @GetMapping("/search")
-    public Iterable<net.cho20.neotv.core.bean.Group> groups(@RequestParam(value = "code") String code,
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> groups(@RequestParam(value = "code", required = false) String code,
                                                             @RequestParam(value = "type", required = false) String type,
                                                             @RequestParam(value = "language", required = false) String language,
                                                             @RequestParam(value = "name") String name) {
         return filter(code, type != null ? Type.valueOf(type) : null, language , name);
     }
 
-    private Iterable<net.cho20.neotv.core.bean.Group> filter(String code, Type type, String language, String... name) {
+    private Iterable<net.cho20.neotv.core.bean.Group<?>> filter(String code, Type type, String language, String... name) {
         Language l = language!=null && !language.equals("undefined")?Language.valueOf(language.toUpperCase()):Language.FR;
         return processorService.getGroups(code)
                 .filter(group -> type == null || group.getType() == type)
@@ -86,7 +87,7 @@ public class RestController {
     }
 
     @GetMapping("/movies")
-    public Iterable<net.cho20.neotv.core.bean.Group> movies(
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> movies(
             @RequestParam(value = "code") String code,
             @RequestParam(value = "language", required = false) String language
     ) {
@@ -95,7 +96,7 @@ public class RestController {
 
 
     @GetMapping("/cartoons")
-    public Iterable<net.cho20.neotv.core.bean.Group> cartoons(
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> cartoons(
             @RequestParam(value = "code") String code,
             @RequestParam(value = "language", required = false) String language
     ) {
@@ -103,14 +104,14 @@ public class RestController {
     }
 
     @GetMapping("/tv")
-    public Iterable<net.cho20.neotv.core.bean.Group> tv(@RequestParam(value = "code") String code,
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> tv(@RequestParam(value = "code", required = false) String code,
                                                         @RequestParam(value = "language", required = false) String language
     ) {
         return filter(code, Type.TV, language);
     }
 
     @GetMapping("/sport")
-    public Iterable<net.cho20.neotv.core.bean.Group> sport(@RequestParam(value = "code") String code) {
+    public Iterable<net.cho20.neotv.core.bean.Group<?>> sport(@RequestParam(value = "code", required = false) String code) {
         return filter(code, Type.TV, null, ".*[sS]port.*", "^Canal\\+$");
     }
 

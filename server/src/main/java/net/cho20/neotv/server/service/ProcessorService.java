@@ -1,7 +1,12 @@
 package net.cho20.neotv.server.service;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -9,18 +14,26 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import net.cho20.neotv.core.bean.*;
+import net.cho20.neotv.core.bean.Group;
+import net.cho20.neotv.core.bean.Language;
+import net.cho20.neotv.core.bean.MovieBean;
+import net.cho20.neotv.core.bean.StreamBean;
+import net.cho20.neotv.core.bean.Type;
 import net.cho20.neotv.core.service.JsonProcessor;
 import net.cho20.neotv.core.service.M3uGroup;
 import net.cho20.neotv.core.service.M3uProcessor;
 import net.cho20.neotv.core.service.Processor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 
 public class ProcessorService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProcessorService.class);
+
+    @Value("${app.code}")
+    private String internalCode;
 
     private Collection<Processor> processors = new ArrayList<>();
     private Iterable<Group<StreamBean>> groups = Collections.emptyList();
@@ -36,27 +49,26 @@ public class ProcessorService {
         this.processors.add(new JsonProcessor(storage, api, "Cartoons", Language.EN, Type.CARTOON, 131));
     }
 
-
     @Scheduled(fixedDelay = 1 * 3600 * 1000)
     public void process() {
         try {
             LOG.info("Start loading goups");
             ExecutorService executorService = Executors.newFixedThreadPool(3);
             groups = processors
-                    .stream()
-                    .map((Function<Processor, Iterable<Group<StreamBean>>>) processor -> {
-                        try {
-                            return processor.process(executorService);
-                        } catch (Exception e) {
-                            LOG.warn("Error while loading group", e);
-                            return Collections.emptyList();
-                        }
-                    })
-                    .flatMap((Function<Iterable<Group<StreamBean>>, java.util.stream.Stream<Group<StreamBean>>>) gr -> StreamSupport.stream(gr.spliterator(), false))
-                    .collect(Collectors.toList());
+                .stream()
+                .map((Function<Processor, Iterable<Group<StreamBean>>>) processor -> {
+                    try {
+                        return processor.process(executorService);
+                    } catch (Exception e) {
+                        LOG.warn("Error while loading group", e);
+                        return Collections.emptyList();
+                    }
+                })
+                .flatMap((Function<Iterable<Group<StreamBean>>, java.util.stream.Stream<Group<StreamBean>>>) gr -> StreamSupport.stream(gr.spliterator(), false))
+                .collect(Collectors.toList());
             executorService.shutdown();
             while (!executorService.isTerminated()) {
-                LOG.info("Waiting..., remaining tasks : {}", ((ThreadPoolExecutor)executorService).getQueue().size());
+                LOG.info("Waiting..., remaining tasks : {}", ((ThreadPoolExecutor) executorService).getQueue().size());
                 Thread.sleep(1000);
             }
             LOG.info("Groups loaded");
@@ -65,21 +77,25 @@ public class ProcessorService {
         }
     }
 
-
-    public java.util.stream.Stream<Group<Map<String, String>>> getGroups(String code) {
+    public java.util.stream.Stream<Group<Map<String, String>>> getGroups(String input) {
+        String code;
+        if (input == null) {
+            code = internalCode;
+        }else{
+            code=input;
+        }
         return StreamSupport.stream(groups.spliterator(), false)
-                .map(group ->
-                        new Group<>(
-                                group.getName(),
-                                group.getType(),
-                                group.getLanguage(),
-                                StreamSupport.stream(group.getStreams().spliterator(), false)
-                                        .map(stream -> clone(code, stream))
-                                        .collect(Collectors.toList())
-                        )
-                );
+            .map(group ->
+                new Group<>(
+                    group.getName(),
+                    group.getType(),
+                    group.getLanguage(),
+                    StreamSupport.stream(group.getStreams().spliterator(), false)
+                        .map(stream -> clone(code, stream))
+                        .collect(Collectors.toList())
+                )
+            );
     }
-
 
     private Map<String, String> clone(String code, StreamBean stream) {
         Map<String, String> out = new LinkedHashMap<>();
