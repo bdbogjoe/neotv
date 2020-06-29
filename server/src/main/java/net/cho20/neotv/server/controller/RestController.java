@@ -4,8 +4,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -16,22 +19,50 @@ import net.cho20.neotv.core.bean.Language;
 import net.cho20.neotv.core.bean.Type;
 import net.cho20.neotv.server.service.ProcessorService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @org.springframework.web.bind.annotation.RestController
-@RequestMapping("rest")
+@RequestMapping("/rest")
 public class RestController {
+
+    private static final String[] URLS = {"tv", "sport", "movies", "cartoons"};
+    private static final String[] LNG = {"movies", "cartoons"};
 
     private final ProcessorService processorService;
     @Value("${app.code}")
     private String internalCode;
-    private String[] sorts = {"publish", "date", "title"};
-    private Collection<String> revers = Arrays.stream(new String[] {"publish", "date"}).collect(Collectors.toSet());
+    private final String[] SORTS = {"publish", "date", "title"};
+    private final Collection<String> SORTS_REVERS = Arrays.stream(new String[] {"publish", "date"}).collect(Collectors.toSet());
 
     public RestController(ProcessorService processorService) {
         this.processorService = processorService;
+    }
+
+    @GetMapping("/")
+    public ResponseEntity<Map<String, Collection<String>>> home() {
+        Map<String, Collection<String>> out = Arrays.stream(URLS)
+            .collect(Collectors.toMap(s -> s, type -> {
+                if (Arrays.asList(LNG).contains(type)){
+                    return Arrays.stream(Language.values()).map(s -> ServletUriComponentsBuilder
+                        .fromCurrentRequestUri()
+                        .path("/" + type)
+                        .queryParam("language", s)
+                        .toUriString()).collect(Collectors.toList());
+                }else{
+                    return Collections.singleton(ServletUriComponentsBuilder
+                        .fromCurrentRequestUri()
+                        .path("/" + type)
+                        .toUriString());
+                }
+                }
+
+            ));
+        return ResponseEntity.ok(out);
+
     }
 
     @GetMapping("/refresh")
@@ -59,7 +90,7 @@ public class RestController {
                 mapGroup.getType(),
                 mapGroup.getLanguage(),
                 StreamSupport.stream(mapGroup.getStreams().spliterator(), false)
-                    .sorted(new MapComparator(sorts, revers))
+                    .sorted(new MapComparator(SORTS, SORTS_REVERS))
                     .collect(Collectors.toList())
             ))
             .collect(Collectors.toList());
@@ -74,7 +105,7 @@ public class RestController {
     }
 
     private Iterable<net.cho20.neotv.core.bean.Group<?>> filter(String code, Type type, String language, String... name) {
-        Language l = language != null && !language.isEmpty()  && !language.equals("undefined") ? Language.valueOf(language.toUpperCase()) : Language.FR;
+        Language l = language != null && !language.isEmpty() && !language.equals("undefined") ? Language.valueOf(language.toUpperCase()) : Language.FR;
         return processorService.getGroups(code)
             .filter(group -> type == null || group.getType() == type)
             .filter(group -> language == null || group.getLanguage() == l)
@@ -91,7 +122,7 @@ public class RestController {
                                 }
                             )
                     )
-                    .sorted(new MapComparator(sorts, revers))
+                    .sorted(new MapComparator(SORTS, SORTS_REVERS))
                     .collect(Collectors.toList())
             ))
             .filter(group -> group.getStreams().iterator().hasNext())

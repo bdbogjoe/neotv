@@ -1,19 +1,25 @@
 package net.cho20.neotv.server.controller;
 
-import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
 
-import net.cho20.neotv.server.service.ProcessorService;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.view.RedirectView;
 
 @Controller
 public class HomeController {
 
     @RequestMapping(value = "/")
-    public String index() {
-        return "index";
+    public RedirectView index(HttpServletRequest request) {
+        RedirectView view = new RedirectView();
+        if(request.getRequestURI().contains("neotv")){
+            view.setContextRelative(false);
+            view.setUrl("https://neotv-ui.cho20.synology.me");
+        }else{
+            view.setContextRelative(true);
+            view.setUrl("/rest/");
+        }
+        return view;
     }
 
 }
