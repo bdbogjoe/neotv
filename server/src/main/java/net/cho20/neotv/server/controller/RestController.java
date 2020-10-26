@@ -19,6 +19,7 @@ import net.cho20.neotv.core.bean.Language;
 import net.cho20.neotv.core.bean.Type;
 import net.cho20.neotv.server.service.ProcessorService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,25 +44,29 @@ public class RestController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<Map<String, Collection<String>>> home() {
+    public ResponseEntity<Map<String, Collection<String>>> home(HttpServletRequest request) {
+        boolean prod = request.getHeader("prod")!=null;
+        String scheme = "http"+(prod?"s":"");
         Map<String, Collection<String>> out = Arrays.stream(URLS)
             .collect(Collectors.toMap(s -> s, type -> {
                 if (Arrays.asList(LNG).contains(type)){
                     return Arrays.stream(Language.values()).map(s -> ServletUriComponentsBuilder
                         .fromCurrentRequestUri()
+                        .scheme(scheme)
                         .path("/" + type)
                         .queryParam("language", s)
                         .toUriString()).collect(Collectors.toList());
                 }else{
                     return Collections.singleton(ServletUriComponentsBuilder
                         .fromCurrentRequestUri()
+                        .scheme(scheme)
                         .path("/" + type)
                         .toUriString());
                 }
                 }
 
             ));
-        return ResponseEntity.ok(out);
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(out);
 
     }
 
@@ -154,7 +159,7 @@ public class RestController {
 
     @GetMapping("/sport")
     public Iterable<net.cho20.neotv.core.bean.Group<?>> sport(HttpServletRequest request, @RequestParam(value = "code", required = false) String code) throws UnknownHostException {
-        return filter(getCode(request, code), Type.TV, null, ".*[sS]port.*", "^Canal\\+$");
+        return filter(getCode(request, code), Type.TV, null, ".*[sS]port.*", "^Canal\\+$", ".*foot.*");
     }
 
     private static class MapComparator implements Comparator<Map<String, String>> {
